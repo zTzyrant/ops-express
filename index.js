@@ -4,8 +4,7 @@ const app = express()
 const port = 3000
 const bodyparser = require('body-parser')
 const db = require('./connection/connection')
-const response = require('./response')
-const md5 = require('md5')
+const response = require('./response') 
 
 app.use(cors({
   methods: 'GET,POST,PATCH,DELETE,OPTIONS',
@@ -42,12 +41,12 @@ app.post('/login', (req, res) => {
 app.post('/registeruser', (req, res) => {
     console.log({registerBody: req.body});
     sql = `INSERT INTO user(userid, username, password, fullname, gender, email, phone)
-        VALUES ('', '${req.body.username}', ('${md5(req.body.password)}'), '${req.body.fullname}', '${req.body.gender}', '${req.body.email}', '${req.body.phone}')`
+        VALUES ('', '${req.body.username}', ('${(req.body.password)}'), '${req.body.fullname}', '${req.body.gender}', '${req.body.email}', '${req.body.phone}')`
     db.query(sql, (err, result) => {
         if(err){
-            throw err;
+            response(208, result, err, res)
         } else {
-            res.send("Success register user")
+            response(201, result, err, res)
         }
     })
 })
