@@ -4,7 +4,9 @@ const app = express()
 const port = 3000
 const bodyparser = require('body-parser')
 const db = require('./connection/connection')
-const response = require('./response') 
+const response = require('./response/response')
+const responseRegister = require('./response/responseregist')
+const CryptoJS = require('crypto-js')
 
 app.use(cors({
   methods: 'GET,POST,PATCH,DELETE,OPTIONS',
@@ -33,6 +35,15 @@ app.get('/data', (req, res) => {
     }
 })
 
+app.get('/datausrname', (req, res) => {
+
+  db.query(`SELECT username FROM USER`, (err, result) => {
+    // DATA FROM MYSQL STORE IN HERE
+    response(200, result, "get all data user", res)
+  })
+
+})
+
 app.post('/login', (req, res) => {
     console.log({requestFromOutside: req.body});
     res.send("Login berhasil")
@@ -49,6 +60,35 @@ app.post('/registeruser', (req, res) => {
             response(201, result, err, res)
         }
     })
+})
+
+app.post('/registeruserascustomer', (req, res) => {
+    req.body.password =  CryptoJS.AES.decrypt(req.body.password, 'ops-Project-Night-Fall').toString(CryptoJS.enc.Utf8);
+    const {username, password, fullname, gender, email, phone} = req.body
+    if(username != null || password != null || fullname != null || gender != null || email != null || phone != null){
+        const sql = `INSERT INTO user(userid, username, password, fullname, gender, email, phone)
+        VALUES ('', '${username}', '${password}', '${fullname}', '${gender}', '${email}', '${phone}')`
+        db.query(sql, (err, fields)=>{
+            if (err) throw err
+            if (fields.affectedRows) {
+                let custID = fields.insertId;
+                const sql2 = `INSERT INTO consumer (userid, consid, addressid) value (${custID}, '','')`
+                db.query(sql2, (err2, fields2)=>{
+                    if(fields2.affectedRows){
+                        responseRegister(200, 1, fields2, res)
+                    } else{
+                        responseRegister(203, 'Unknown Error in 2', err2, fields2)
+                    }
+                })
+            } else {
+                responseRegister(203, 'Unknown Error in 1', err, res)
+            }
+        })
+    } else {
+        responseRegister(203, 0, null, res)
+    }
+    
+    
 })
 
 app.listen(port, () => {
