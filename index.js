@@ -1,3 +1,4 @@
+require('dotenv').config()
 const express = require('express')
 const cors = require('cors')
 const app = express()
@@ -17,6 +18,9 @@ app.use(cors({
 app.use(bodyparser.json())
 
 // routes / URL / endpoint
+let f =  CryptoJS.AES.encrypt('xHrOpsAngularExpress', process.env.LOCKED_API_CUSTOMER).toString()
+console.log(f);
+console.log(CryptoJS.AES.decrypt('U2FsdGVkX1/SsSJzKPfdivEaGRoVgrSvDG/mIJNi/jn8ICmkF0nXahR78GC/s3qe', process.env.LOCKED_API_CUSTOMER).toString(CryptoJS.enc.Utf8));
 
 app.get('/', (req, res) => {
     res.send("Why u here?")
@@ -63,7 +67,7 @@ app.post('/registeruser', (req, res) => {
 })
 
 app.post('/registeruserascustomer', (req, res) => {
-    req.body.password =  CryptoJS.AES.decrypt(req.body.password, 'ops-Project-Night-Fall').toString(CryptoJS.enc.Utf8);
+    req.body.password =  CryptoJS.AES.decrypt(req.body.password, process.env.LOCKED_API_CUSTOMER).toString(CryptoJS.enc.Utf8);
     const {username, password, fullname, gender, email, phone} = req.body
     if(username != null || password != null || fullname != null || gender != null || email != null || phone != null){
         const sql = `INSERT INTO user(userid, username, password, fullname, gender, email, phone)
@@ -87,8 +91,30 @@ app.post('/registeruserascustomer', (req, res) => {
     } else {
         responseRegister(203, 0, null, res)
     }
-    
-    
+})
+
+app.post('/logincustomer', (req, res) => {
+    const {email, phonenum, password} = req.body;
+    if(email || phonenum || password != null){
+        let sql = ''
+        if(email != 'unused'){
+            sql = `SELECT * FROM user WHERE email = '${email}' AND password = '${password}'`
+
+        } else {
+            sql = `SELECT * FROM user WHERE phone = '${phonenum}' AND password = '${password}'`
+        }
+        db.query(sql, (err, fields) => {
+            console.log(sql);
+            console.log(fields);
+            if(fields != null)
+                responseRegister(200, 1, fields, res)
+            else
+                responseRegister(404, 0, null, res)
+
+        })
+    } else { 
+        responseRegister(203, 0, null, res)
+    }
 })
 
 app.listen(port, () => {
