@@ -1,28 +1,30 @@
-require('dotenv').config()
+
 var nodemailer = require('nodemailer');
-const templateMail = require('./mails/templatemail');
-console.log("iam here");
+let templateMail = require('./mails/templatemail');
 
-console.log(templateMail());
-let source = templateMail()
-var transporter = nodemailer.createTransport({
-    service: 'gmail',
-    auth: {
-        user: `${process.env.EMAIL_OPS_CORE}`,
-        pass: `${process.env.EMAIL_OPS_CORE_PSWD}`
-    }
-});
 
-var mailOptions = {
-    from:  `${process.env.EMAIL_OPS_CORE}`,
-    to: 'angularkiddie@gmail.com',
-    subject: 'Welcome To OPS Core',
-    html: source
-};
-console.log("iam here");
+const sendEmailOps = (email, pass, username, res) =>{
+    let source = templateMail(username)
+    var transporter = nodemailer.createTransport({
+        service: 'gmail',
+        auth: {
+            user: `${email}`,
+            pass: `${pass}`
+        }
+    });
 
-transporter.sendMail(mailOptions, (err, info) => {
-    console.log("iam here");
-    if (err) throw err;
-    console.log('Email sent: ' + info.response);
-});
+    var mailOptions = {
+        from:  `${email}`,
+        to: 'angularkiddie@gmail.com',
+        subject: 'Welcome To OPS Corexv',
+        html: source
+    };
+
+    transporter.sendMail(mailOptions, (err, info) => {
+        if (err) return res.send(`Error: ${err}`);
+        console.log('Email sent: ' + info.response);
+        res.send(`Email sent: ${info.response}`)
+    });
+}
+
+module.exports = sendEmailOps

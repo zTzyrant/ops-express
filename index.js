@@ -8,6 +8,9 @@ const db = require('./connection/connection')
 const response = require('./response/response')
 const responseRegister = require('./response/responseregist')
 const CryptoJS = require('crypto-js')
+const bcrypt = require ('bcrypt');
+const sendEmailOps = require('./sendemail')
+
 
 app.use(cors({
   methods: 'GET,POST,PATCH,DELETE,OPTIONS',
@@ -18,9 +21,6 @@ app.use(cors({
 app.use(bodyparser.json())
 
 // routes / URL / endpoint
-let f =  CryptoJS.AES.encrypt('xHrOpsAngularExpress', process.env.LOCKED_API_CUSTOMER).toString()
-console.log(f);
-console.log(CryptoJS.AES.decrypt('U2FsdGVkX1/SsSJzKPfdivEaGRoVgrSvDG/mIJNi/jn8ICmkF0nXahR78GC/s3qe', process.env.LOCKED_API_CUSTOMER).toString(CryptoJS.enc.Utf8));
 
 app.get('/', (req, res) => {
     res.send("Why u here?")
@@ -41,7 +41,7 @@ app.get('/data', (req, res) => {
 
 app.get('/datausrname', (req, res) => {
 
-  db.query(`SELECT username FROM USER`, (err, result) => {
+  db.query(`SELECT username, email, phone FROM USER`, (err, result) => {
     // DATA FROM MYSQL STORE IN HERE
     response(200, result, "get all data user", res)
   })
@@ -67,11 +67,10 @@ app.post('/registeruser', (req, res) => {
 })
 
 app.post('/registeruserascustomer', (req, res) => {
-    req.body.password =  CryptoJS.AES.decrypt(req.body.password, process.env.LOCKED_API_CUSTOMER).toString(CryptoJS.enc.Utf8);
-    const {username, password, fullname, gender, email, phone} = req.body
-    if(username != null || password != null || fullname != null || gender != null || email != null || phone != null){
+    const {username, password, fullname, genderselect, email, phone} = req.body
+    if(username != null || password != null || fullname != null || genderselect != null || email != null || phone != null){
         const sql = `INSERT INTO user(userid, username, password, fullname, gender, email, phone)
-        VALUES ('', '${username}', '${password}', '${fullname}', '${gender}', '${email}', '${phone}')`
+        VALUES ('', '${username}', '${password}', '${fullname}', '${genderselect}', '${email}', '${phone}')`
         db.query(sql, (err, fields)=>{
             if (err) throw err
             if (fields.affectedRows) {
@@ -79,42 +78,46 @@ app.post('/registeruserascustomer', (req, res) => {
                 const sql2 = `INSERT INTO consumer (userid, consid, addressid) value (${custID}, '','')`
                 db.query(sql2, (err2, fields2)=>{
                     if(fields2.affectedRows){
-                        responseRegister(200, 1, fields2, res)
+
+                        responseRegister(200, 1, fields, null, res)
                     } else{
-                        responseRegister(203, 'Unknown Error in 2', err2, fields2)
+                        responseRegister(203, 'Unknown Error in 2', err2, null, fields2)
                     }
                 })
             } else {
-                responseRegister(203, 'Unknown Error in 1', err, res)
+                responseRegister(203, 'Unknown Error in 1', err, null, res)
             }
         })
     } else {
-        responseRegister(203, 0, null, res)
+        responseRegister(203, 0, null, null, res)
     }
 })
 
 app.post('/logincustomer', (req, res) => {
-    const {email, phonenum, password} = req.body;
-    if(email || phonenum || password != null){
-        let sql = ''
-        if(email != 'unused'){
+    const {email, username, password} = req.body;
+    if(email || username || password != null){
+        let sql
+        if(username != 'unused')
+            sql = `SELECT * FROM user WHERE username = '${username}' AND password = '${password}'`
+
+        else 
             sql = `SELECT * FROM user WHERE email = '${email}' AND password = '${password}'`
-
-        } else {
-            sql = `SELECT * FROM user WHERE phone = '${phonenum}' AND password = '${password}'`
-        }
         db.query(sql, (err, fields) => {
-            console.log(sql);
-            console.log(fields);
-            if(fields != null)
-                responseRegister(200, 1, fields, res)
+            let keyLogin = CryptoJS.HmacSHA256(username, process.env.LOCKED_API_CUSTOMER)
+            keyLogin = CryptoJS.enc.Base64.stringify(keyLogin)
+            if(fields.length > 0)
+                responseRegister(200, 1, fields, keyLogin, res)
             else
-                responseRegister(404, 0, null, res)
-
+                responseRegister(203, 0, null, null, res)
         })
     } else { 
         responseRegister(203, 0, null, res)
     }
+})
+
+app.get('/sendmail', (req, res) => {
+    console.log("Sending Email");
+    sendEmailOps(process.env.EMAIL_OPS_CORE, process.env.EMAIL_OPS_CORE_PSWD, "Kryptonxas", res)
 })
 
 app.listen(port, () => {
