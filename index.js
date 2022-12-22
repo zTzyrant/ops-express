@@ -8,7 +8,6 @@ const db = require('./connection/connection')
 const response = require('./response/response')
 const responseRegister = require('./response/responseregist')
 const CryptoJS = require('crypto-js')
-const bcrypt = require ('bcrypt');
 const sendEmailOps = require('./sendemail')
 
 
@@ -103,7 +102,7 @@ app.post('/logincustomer', (req, res) => {
         else 
             sql = `SELECT * FROM user WHERE email = '${email}' AND password = '${password}'`
         db.query(sql, (err, fields) => {
-            let keyLogin = CryptoJS.HmacSHA256(username, process.env.LOCKED_API_CUSTOMER)
+            let keyLogin = CryptoJS.HmacSHA256(fields.username, process.env.LOCKED_API_CUSTOMER)
             keyLogin = CryptoJS.enc.Base64.stringify(keyLogin)
             if(fields.length > 0)
                 responseRegister(200, 1, fields, keyLogin, res)
