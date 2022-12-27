@@ -1,0 +1,410 @@
+const resetpasswordMail = (usernmae, newpass) => {
+let tempMail  = `
+    <!DOCTYPE HTML PUBLIC "-//W3C//DTD XHTML 1.0 Transitional //EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" xmlns:v="urn:schemas-microsoft-com:vml" xmlns:o="urn:schemas-microsoft-com:office:office"><head>
+  <!--[if gte mso 9]>
+  <xml>
+    <o:OfficeDocumentSettings>
+      <o:AllowPNG/>
+      <o:PixelsPerInch>96</o:PixelsPerInch>
+    </o:OfficeDocumentSettings>
+  </xml>
+  <![endif]-->
+    <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="x-apple-disable-message-reformatting">
+    <!--[if !mso]><!--><meta http-equiv="X-UA-Compatible" content="IE=edge"><!--<![endif]-->
+    <title></title>
+    
+      <style type="text/css">
+        @media only screen and (min-width: 620px) {
+    .u-row {
+      width: 600px !important;
+    }
+    .u-row .u-col {
+      vertical-align: top;
+    }
+  
+    .u-row .u-col-100 {
+      width: 600px !important;
+    }
+  
+  }
+  
+  @media (max-width: 620px) {
+    .u-row-container {
+      max-width: 100% !important;
+      padding-left: 0px !important;
+      padding-right: 0px !important;
+    }
+    .u-row .u-col {
+      min-width: 320px !important;
+      max-width: 100% !important;
+      display: block !important;
+    }
+    .u-row {
+      width: 100% !important;
+    }
+    .u-col {
+      width: 100% !important;
+    }
+    .u-col > div {
+      margin: 0 auto;
+    }
+  }
+  body {
+    margin: 0;
+    padding: 0;
+  }
+  
+  table,
+  tr,
+  td {
+    vertical-align: top;
+    border-collapse: collapse;
+  }
+  
+  p {
+    margin: 0;
+  }
+  
+  .ie-container table,
+  .mso-container table {
+    table-layout: fixed;
+  }
+  
+  * {
+    line-height: inherit;
+  }
+  
+  a[x-apple-data-detectors='true'] {
+    color: inherit !important;
+    text-decoration: none !important;
+  }
+  .linksops{
+    background: white;
+border-radius: 10px;
+    filter: invert(100%); width: 32px !important;height: 32px !important;display: inline-block;border-collapse: collapse;table-layout: fixed;border-spacing: 0;mso-table-lspace: 0pt;mso-table-rspace: 0pt;vertical-align: top;margin-right: 21px
+  }
+  table, td { color: #000000; } #u_body a { color: #cca250; text-decoration: none; } @media (max-width: 480px) { #u_content_image_4 .v-src-width { width: auto !important; } #u_content_image_4 .v-src-max-width { max-width: 57% !important; } #u_content_image_3 .v-container-padding-padding { padding: 46px 10px 10px !important; } #u_content_image_3 .v-src-width { width: auto !important; } #u_content_image_3 .v-src-max-width { max-width: 29% !important; } #u_content_heading_3 .v-container-padding-padding { padding: 10px 20px !important; } #u_content_heading_3 .v-font-size { font-size: 28px !important; } #u_content_text_3 .v-container-padding-padding { padding: 10px 22px 26px !important; } #u_content_heading_2 .v-container-padding-padding { padding: 22px 22px 10px !important; } #u_content_heading_2 .v-font-size { font-size: 24px !important; } }
+      </style>
+    
+    
+  
+  <!--[if !mso]><!--><link href="https://fonts.googleapis.com/css?family=Montserrat:400,700&amp;display=swap" rel="stylesheet" type="text/css"><!--<![endif]-->
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.2/font/bootstrap-icons.css">
+  <script src="moz-extension://86d17a48-bc7c-45e8-a4ba-fbde2bfed978/assets/prompt.js"></script></head>
+  
+  <body class="clean-body u_body" style="margin: 0;padding: 0;-webkit-text-size-adjust: 100%;background-color: #f9f9f9;color: #000000">
+    <!--[if IE]><div class="ie-container"><![endif]-->
+    <!--[if mso]><div class="mso-container"><![endif]-->
+    <table id="u_body" style="border-collapse: collapse;table-layout: fixed;border-spacing: 0;mso-table-lspace: 0pt;mso-table-rspace: 0pt;vertical-align: top;min-width: 320px;Margin: 0 auto;background-color: #f9f9f9;width:100%" cellspacing="0" cellpadding="0">
+    <tbody>
+    <tr style="vertical-align: top">
+      <td style="word-break: break-word;border-collapse: collapse !important;vertical-align: top">
+      <!--[if (mso)|(IE)]><table width="100%" cellpadding="0" cellspacing="0" border="0"><tr><td align="center" style="background-color: #f9f9f9;"><![endif]-->
+      
+  
+  <div class="u-row-container" style="padding: 0px;background-color: transparent">
+    <div class="u-row" style="Margin: 0 auto;min-width: 320px;max-width: 600px;overflow-wrap: break-word;word-wrap: break-word;word-break: break-word;background-color: #07484a;">
+      <div style="border-collapse: collapse;display: table;width: 100%;height: 100%;background-color: transparent;">
+        <!--[if (mso)|(IE)]><table width="100%" cellpadding="0" cellspacing="0" border="0"><tr><td style="padding: 0px;background-color: transparent;" align="center"><table cellpadding="0" cellspacing="0" border="0" style="width:600px;"><tr style="background-color: #111114;"><![endif]-->
+        
+  <!--[if (mso)|(IE)]><td align="center" width="600" style="width: 600px;padding: 0px;border-top: 0px solid transparent;border-left: 0px solid transparent;border-right: 0px solid transparent;border-bottom: 0px solid transparent;border-radius: 0px;-webkit-border-radius: 0px; -moz-border-radius: 0px;" valign="top"><![endif]-->
+  <div class="u-col u-col-100" style="max-width: 320px;min-width: 600px;display: table-cell;vertical-align: top;">
+    <div style="height: 100%;width: 100% !important;border-radius: 0px;-webkit-border-radius: 0px; -moz-border-radius: 0px;">
+    <!--[if (!mso)&(!IE)]><!--><div style="height: 100%; padding: 0px;border-top: 0px solid transparent;border-left: 0px solid transparent;border-right: 0px solid transparent;border-bottom: 0px solid transparent;border-radius: 0px;-webkit-border-radius: 0px; -moz-border-radius: 0px;"><!--<![endif]-->
+    
+  <table id="u_content_image_4" style="font-family:'Montserrat',sans-serif;" role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0">
+    <tbody>
+      <tr>
+        <td class="v-container-padding-padding" style="overflow-wrap:break-word;word-break:break-word;padding:20px 10px;font-family:'Montserrat',sans-serif;" align="left">
+          
+  <table width="100%" cellspacing="0" cellpadding="0" border="0">
+    <tbody><tr>
+      <td style="padding-right: 0px;padding-left: 0px;" align="center">
+        <p style="font-size: 14px; line-height: 140%;"><span style="font-size: 2rem; line-height: 5rem; color: white;"><strong>Reset Passowrd<br></strong></span></p>
+      </td>
+    </tr>
+  </tbody></table>
+  
+        </td>
+      </tr>
+    </tbody>
+  </table>
+  
+    <!--[if (!mso)&(!IE)]><!--></div><!--<![endif]-->
+    </div>
+  </div>
+  <!--[if (mso)|(IE)]></td><![endif]-->
+        <!--[if (mso)|(IE)]></tr></table></td></tr></table><![endif]-->
+      </div>
+    </div>
+  </div>
+  
+  
+  
+  <div class="u-row-container" style="padding: 0px;background-color: transparent">
+    <div class="u-row" style="Margin: 0 auto;min-width: 320px;max-width: 600px;overflow-wrap: break-word;word-wrap: break-word;word-break: break-word;background-color: transparent;">
+      <div style="border-collapse: collapse;display: table;width: 100%;height: 100%;background-color: transparent;">
+        <!--[if (mso)|(IE)]><table width="100%" cellpadding="0" cellspacing="0" border="0"><tr><td style="padding: 0px;background-color: transparent;" align="center"><table cellpadding="0" cellspacing="0" border="0" style="width:600px;"><tr style="background-color: transparent;"><![endif]-->
+        
+  <!--[if (mso)|(IE)]><td align="center" width="600" style="background-color: #fffefe;width: 600px;padding: 0px;border-top: 0px solid transparent;border-left: 0px solid transparent;border-right: 0px solid transparent;border-bottom: 0px solid transparent;border-radius: 0px;-webkit-border-radius: 0px; -moz-border-radius: 0px;" valign="top"><![endif]-->
+  <div class="u-col u-col-100" style="max-width: 320px;min-width: 600px;display: table-cell;vertical-align: top;">
+    <div style="background-color: #fffefe;height: 100%;width: 100% !important;border-radius: 0px;-webkit-border-radius: 0px; -moz-border-radius: 0px;">
+    <!--[if (!mso)&(!IE)]><!--><div style="height: 100%; padding: 0px;border-top: 0px solid transparent;border-left: 0px solid transparent;border-right: 0px solid transparent;border-bottom: 0px solid transparent;border-radius: 0px;-webkit-border-radius: 0px; -moz-border-radius: 0px;"><!--<![endif]-->
+    
+  <table id="u_content_image_3" style="font-family:'Montserrat',sans-serif;" role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0">
+    <tbody>
+      <tr>
+        <td class="v-container-padding-padding" style="overflow-wrap:break-word;word-break:break-word;padding:55px 10px 10px;font-family:'Montserrat',sans-serif;" align="left">
+          
+  <table width="100%" cellspacing="0" cellpadding="0" border="0">
+    </table>
+  
+        </td>
+      </tr>
+    </tbody>
+  </table>
+  
+  <table id="u_content_heading_3" style="font-family:'Montserrat',sans-serif;" role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0">
+    <tbody>
+      <tr>
+        <td class="v-container-padding-padding" style="overflow-wrap:break-word;word-break:break-word;padding:10px 55px;font-family:'Montserrat',sans-serif;" align="left">
+          
+    <h1 class="v-font-size" style="margin: 0px; line-height: 160%; text-align: center; word-wrap: break-word; font-weight: normal; font-family: 'Montserrat',sans-serif; font-size: 33px;"><strong>Successfully Reset Password !<br></strong></h1>
+  
+        </td>
+      </tr>
+    </tbody>
+  </table>
+  
+  <table id="u_content_text_3" style="font-family:'Montserrat',sans-serif;" role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0">
+    <tbody>
+      <tr>
+        <td class="v-container-padding-padding" style="overflow-wrap:break-word;word-break:break-word;padding:10px 60px 50px;font-family:'Montserrat',sans-serif;" align="left">
+          
+    <div style="color: #444444; line-height: 170%; text-align: center; word-wrap: break-word;">
+      <p style="font-size: 14px; line-height: 170%;">Hi ${usernmae}!</p><p style="font-size: 14px; line-height: 170%;">We already reset your account password.</p>
+      <p style="font-size: 14px; line-height: 170%;">Please use this link to reset your password</p><p style="font-size: 14px; line-height: 170%;"> <strong style"background-color: #bfbfbf4d;"><a href="${newpass}">{ ${newpass} }</a></strong></p><p style="font-size: 14px; line-height: 170%;">While login into our OPS Core Website !</p>
+  
+  
+    </div>
+  
+        </td>
+      </tr>
+    </tbody>
+  </table>
+  
+    <!--[if (!mso)&(!IE)]><!--></div><!--<![endif]-->
+    </div>
+  </div>
+  <!--[if (mso)|(IE)]></td><![endif]-->
+        <!--[if (mso)|(IE)]></tr></table></td></tr></table><![endif]-->
+      </div>
+    </div>
+  </div>
+  
+  
+  
+  <div class="u-row-container" style="padding: 0px;background-color: transparent">
+    <div class="u-row" style="Margin: 0 auto;min-width: 320px;max-width: 600px;overflow-wrap: break-word;word-wrap: break-word;word-break: break-word;background-color: #ffffff;">
+      <div style="border-collapse: collapse;display: table;width: 100%;height: 100%;background-color: transparent;">
+        <!--[if (mso)|(IE)]><table width="100%" cellpadding="0" cellspacing="0" border="0"><tr><td style="padding: 0px;background-color: transparent;" align="center"><table cellpadding="0" cellspacing="0" border="0" style="width:600px;"><tr style="background-color: #ffffff;"><![endif]-->
+        
+  <!--[if (mso)|(IE)]><td align="center" width="600" style="width: 600px;padding: 0px;border-top: 0px solid transparent;border-left: 0px solid transparent;border-right: 0px solid transparent;border-bottom: 0px solid transparent;border-radius: 0px;-webkit-border-radius: 0px; -moz-border-radius: 0px;" valign="top"><![endif]-->
+  <div class="u-col u-col-100" style="max-width: 320px;min-width: 600px;display: table-cell;vertical-align: top; ">
+    <div style="height: 100%;width: 100% !important;border-radius: 0px;-webkit-border-radius: 0px; -moz-border-radius: 0px;">
+    <!--[if (!mso)&(!IE)]><!--><div style="height: 100%; padding: 0px;border-top: 0px solid transparent;border-left: 0px solid transparent;border-right: 0px solid transparent;border-bottom: 0px solid transparent;border-radius: 0px;-webkit-border-radius: 0px; -moz-border-radius: 0px;"><!--<![endif]-->
+    
+  <table id="u_content_heading_2" style="font-family:'Montserrat',sans-serif;" role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0">
+    <tbody>
+      <tr>
+        <td class="v-container-padding-padding" style="overflow-wrap:break-word;word-break:break-word;padding:40px 55px 10px;font-family:'Montserrat',sans-serif;" align="left">
+          
+    <h1 class="v-font-size" style="margin: 0px; line-height: 160%; text-align: center; word-wrap: break-word; font-weight: normal; font-family: 'Montserrat',sans-serif; font-size: 26px;"><strong>Direct to link reset rassword</strong></h1>
+  
+        </td>
+      </tr>
+    </tbody>
+  </table>
+  
+  <table style="font-family:'Montserrat',sans-serif;" role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0">
+    <tbody>
+      <tr>
+        <td class="v-container-padding-padding" style="overflow-wrap:break-word;word-break:break-word;padding:10px 10px 50px;font-family:'Montserrat',sans-serif;" align="left">
+          
+    <!--[if mso]><style>.v-button {background: transparent !important;}</style><![endif]-->
+  <div align="center">
+    <!--[if mso]><v:roundrect xmlns:v="urn:schemas-microsoft-com:vml" xmlns:w="urn:schemas-microsoft-com:office:word" href="${newpass}" style="height:47px; v-text-anchor:middle; width:172px;" arcsize="8.5%"  stroke="f" fillcolor="#70908b"><w:anchorlock/><center style="color:#FFFFFF;font-family:'Montserrat',sans-serif;"><![endif]-->  
+      <a href="${newpass}" target="_blank" class="v-button" style="box-sizing: border-box;display: inline-block;font-family:'Montserrat',sans-serif;text-decoration: none;-webkit-text-size-adjust: none;text-align: center;color: #FFFFFF; background-color: #07484a; border-radius: 4px;-webkit-border-radius: 4px; -moz-border-radius: 4px; width:auto; max-width:100%; overflow-wrap: break-word; word-break: break-word; word-wrap:break-word; mso-border-alt: none;">
+        <span style="display:block;padding:14px 33px;line-height:120%;"><strong><span style="font-size: 16px; line-height: 19.2px;">Click Here →</span></strong></span>
+      </a>
+    <!--[if mso]></center></v:roundrect><![endif]-->
+  </div>
+  
+        </td>
+      </tr>
+    </tbody>
+  </table>
+  
+    <!--[if (!mso)&(!IE)]><!--></div><!--<![endif]-->
+    </div>
+  </div>
+  <!--[if (mso)|(IE)]></td><![endif]-->
+        <!--[if (mso)|(IE)]></tr></table></td></tr></table><![endif]-->
+      </div>
+    </div>
+  </div>
+  
+  
+  
+  <div class="u-row-container" style="padding: 0px;background-color: transparent">
+    <div class="u-row" style="Margin: 0 auto;min-width: 320px;max-width: 600px;overflow-wrap: break-word;word-wrap: break-word;word-break: break-word;background-color: #111114;">
+      <div style="border-collapse: collapse;display: table;width: 100%;height: 100%;background-color: transparent;">
+        <!--[if (mso)|(IE)]><table width="100%" cellpadding="0" cellspacing="0" border="0"><tr><td style="padding: 0px;background-color: transparent;" align="center"><table cellpadding="0" cellspacing="0" border="0" style="width:600px;"><tr style="background-color: #111114;"><![endif]-->
+        
+  <!--[if (mso)|(IE)]><td align="center" width="600" style="width: 600px;padding: 0px;border-top: 0px solid transparent;border-left: 0px solid transparent;border-right: 0px solid transparent;border-bottom: 0px solid transparent;border-radius: 0px;-webkit-border-radius: 0px; -moz-border-radius: 0px;" valign="top"><![endif]-->
+  <div class="u-col u-col-100" style="max-width: 320px;min-width: 600px;display: table-cell;vertical-align: top;">
+    <div style="height: 100%;width: 100% !important;border-radius: 0px;-webkit-border-radius: 0px; -moz-border-radius: 0px; background-color: #07484a;">
+    <!--[if (!mso)&(!IE)]><!--><div style="height: 100%; padding: 0px;border-top: 0px solid transparent;border-left: 0px solid transparent;border-right: 0px solid transparent;border-bottom: 0px solid transparent;border-radius: 0px;-webkit-border-radius: 0px; -moz-border-radius: 0px;"><!--<![endif]-->
+    
+  <table style="font-family:'Montserrat',sans-serif;" role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0">
+    <tbody>
+      <tr>
+        <td class="v-container-padding-padding" style="overflow-wrap:break-word;word-break:break-word;padding:32px 10px 0px;font-family:'Montserrat',sans-serif;" align="left">
+          
+    <div style="color: #ffffff; line-height: 140%; text-align: center; word-wrap: break-word;">
+      <p style="font-size: 14px; line-height: 140%;"><span style="font-size: 18px; line-height: 25.2px;"><strong>OPS Core<br></strong></span></p>
+    </div>
+  
+        </td>
+      </tr>
+    </tbody>
+  </table>
+  
+  <table style="font-family:'Montserrat',sans-serif;" role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0">
+    <tbody>
+      <tr>
+        <td class="v-container-padding-padding" style="overflow-wrap:break-word;word-break:break-word;padding:10px;font-family:'Montserrat',sans-serif;" align="left">
+          
+    <div style="color: #b0b1b4; line-height: 180%; text-align: center; word-wrap: break-word;">
+      <p style="font-size: 14px; line-height: 180%;"> Jl. Raya Kedampang No.99, Kerobokan Kelod,</p>
+  <p style="font-size: 14px; line-height: 180%;"> Kuta Utara, Badung, Bali 80361</p>
+    </div>
+  
+        </td>
+      </tr>
+    </tbody>
+  </table>
+  
+  <table style="font-family:'Montserrat',sans-serif;" role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0">
+    <tbody>
+      <tr>
+        <td class="v-container-padding-padding" style="overflow-wrap:break-word;word-break:break-word;padding:10px;font-family:'Montserrat',sans-serif;" align="left">
+          
+  <div align="center">
+    <div style="display: table; max-width:158px;">
+    <!--[if (mso)|(IE)]><table width="158" cellpadding="0" cellspacing="0" border="0"><tr><td style="border-collapse:collapse;" align="center"><table width="100%" cellpadding="0" cellspacing="0" border="0" style="border-collapse:collapse; mso-table-lspace: 0pt;mso-table-rspace: 0pt; width:158px;"><tr><![endif]-->
+    
+      
+      <!--[if (mso)|(IE)]><td width="32" style="width:32px; padding-right: 21px;" valign="top"><![endif]-->
+      <table style="width: 32px !important;height: 32px !important;display: inline-block;border-collapse: collapse;table-layout: fixed;border-spacing: 0;mso-table-lspace: 0pt;mso-table-rspace: 0pt;vertical-align: top;margin-right: 21px" width="32" height="32" cellspacing="0" cellpadding="0" border="0" align="left">
+        <tbody><tr style="vertical-align: top"><td style="word-break: break-word;border-collapse: collapse !important;vertical-align: top" valign="middle" align="left">
+          <a href="https://www.instagram.com/me.zein_/" title="Instagram" target="_blank">
+            <img src="https://cdn-icons-png.flaticon.com/512/1400/1400829.png" alt="Instagram" class="linksops">
+          </a>
+        </td></tr>
+      </tbody></table>
+      <!--[if (mso)|(IE)]></td><![endif]-->
+      
+      <!--[if (mso)|(IE)]><td width="32" style="width:32px; padding-right: 21px;" valign="top"><![endif]-->
+      <table style="width: 32px !important;height: 32px !important;display: inline-block;border-collapse: collapse;table-layout: fixed;border-spacing: 0;mso-table-lspace: 0pt;mso-table-rspace: 0pt;vertical-align: top;margin-right: 21px" width="32" height="32" cellspacing="0" cellpadding="0" border="0" align="left">
+        <tbody><tr style="vertical-align: top"><td style="word-break: break-word;border-collapse: collapse !important;vertical-align: top" valign="middle" align="left">
+          <a href="https://www.linkedin.com/in/ztzyrant/" title="LinkedIn" target="_blank">
+            <img src="https://cdn-icons-png.flaticon.com/512/61/61109.png" alt="LinkedIn" class="linksops">      
+          </a>
+        </td></tr>
+      </tbody></table>
+      <!--[if (mso)|(IE)]></td><![endif]-->
+      
+      <!--[if (mso)|(IE)]><td width="32" style="width:32px; padding-right: 0px;" valign="top"><![endif]-->
+      <table style="width: 32px !important;height: 32px !important;display: inline-block;border-collapse: collapse;table-layout: fixed;border-spacing: 0;mso-table-lspace: 0pt;mso-table-rspace: 0pt;vertical-align: top;margin-right: 0px" width="32" height="32" cellspacing="0" cellpadding="0" border="0" align="left">
+        <tbody><tr style="vertical-align: top"><td style="word-break: break-word;border-collapse: collapse !important;vertical-align: top" valign="middle" align="left">
+          <a href="https://github.com/zTzyrant/" title="GitHub" target="_blank">
+            <img src="https://cdn-icons-png.flaticon.com/512/25/25657.png" alt="GitHub" class="linksops">
+          </a>
+        </td></tr>
+      </tbody></table>
+      <!--[if (mso)|(IE)]></td><![endif]-->
+      
+      
+      <!--[if (mso)|(IE)]></tr></table></td></tr></table><![endif]-->
+    </div>
+  </div>
+  
+        </td>
+      </tr>
+    </tbody>
+  </table>
+  
+  <table style="font-family:'Montserrat',sans-serif;" role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0">
+    <tbody>
+      <tr>
+        <td class="v-container-padding-padding" style="overflow-wrap:break-word;word-break:break-word;padding:10px;font-family:'Montserrat',sans-serif;" align="left">
+          
+    <table style="border-collapse: collapse;table-layout: fixed;border-spacing: 0;mso-table-lspace: 0pt;mso-table-rspace: 0pt;vertical-align: top;border-top: 1px solid #9495a7;-ms-text-size-adjust: 100%;-webkit-text-size-adjust: 100%" width="82%" height="0px" cellspacing="0" cellpadding="0" border="0" align="center">
+      <tbody>
+        <tr style="vertical-align: top">
+          <td style="word-break: break-word;border-collapse: collapse !important;vertical-align: top;font-size: 0px;line-height: 0px;mso-line-height-rule: exactly;-ms-text-size-adjust: 100%;-webkit-text-size-adjust: 100%">
+            <span>&nbsp;</span>
+          </td>
+        </tr>
+      </tbody>
+    </table>
+  
+        </td>
+      </tr>
+    </tbody>
+  </table>
+  
+  <table style="font-family:'Montserrat',sans-serif;" role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0">
+    <tbody>
+      <tr>
+        <td class="v-container-padding-padding" style="overflow-wrap:break-word;word-break:break-word;padding:0px 10px 13px;font-family:'Montserrat',sans-serif;" align="left">
+          
+    <div style="color: #b0b1b4; line-height: 180%; text-align: center; word-wrap: break-word;">
+      <p style="font-size: 14px; line-height: 180%;">© 20XX All Rights Reserved</p>
+    </div>
+  
+        </td>
+      </tr>
+    </tbody>
+  </table>
+  
+    <!--[if (!mso)&(!IE)]><!--></div><!--<![endif]-->
+    </div>
+  </div>
+  <!--[if (mso)|(IE)]></td><![endif]-->
+        <!--[if (mso)|(IE)]></tr></table></td></tr></table><![endif]-->
+      </div>
+    </div>
+  </div>
+  
+  
+      <!--[if (mso)|(IE)]></td></tr></table><![endif]-->
+      </td>
+    </tr>
+    </tbody>
+    </table>
+    <!--[if mso]></div><![endif]-->
+    <!--[if IE]></div><![endif]-->
+    </body></html>
+  
+
+`
+
+return tempMail
+}
+
+module.exports = resetpasswordMail

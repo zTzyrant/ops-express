@@ -8,8 +8,11 @@ const db = require('./connection/connection')
 const response = require('./response/response')
 const responseRegister = require('./response/responseregist')
 const CryptoJS = require('crypto-js')
-const sendEmailOps = require('./sendemail')
-
+const sendEmailOps = require('./mails/sendemail')
+const generator = require('generate-password');
+const resetpasswordSender = require('./mails/sendemailrestartpass')
+const bcrypt = require('bcrypt')
+const salt = bcrypt.genSaltSync(10);
 
 app.use(cors({
   methods: 'GET,POST,PATCH,DELETE,OPTIONS',
@@ -67,24 +70,25 @@ app.post('/registeruser', (req, res) => {
 
 app.post('/registeruserascustomer', (req, res) => {
     const {username, password, fullname, genderselect, email, phone} = req.body
-    if(username != null || password != null || fullname != null || genderselect != null || email != null || phone != null){
+    console.log(req.body);
+    if(username !== '' && password !== '' && fullname !== '' && genderselect !== '' && email !== '' && phone !== ''){
+        console.log("iamfukinghere");
         const sql = `INSERT INTO user(userid, username, password, fullname, gender, email, phone)
         VALUES ('', '${username}', '${password}', '${fullname}', '${genderselect}', '${email}', '${phone}')`
         db.query(sql, (err, fields)=>{
-            if (err) throw err
-            if (fields.affectedRows) {
+            if (!err) {
                 let custID = fields.insertId;
                 const sql2 = `INSERT INTO consumer (userid, consid, addressid) value (${custID}, '','')`
                 db.query(sql2, (err2, fields2)=>{
                     if(fields2.affectedRows){
-
+                        sendEmailOps(process.env.EMAIL_OPS_CORE, process.env.EMAIL_OPS_CORE_PSWD, username, email)
                         responseRegister(200, 1, fields, null, res)
                     } else{
-                        responseRegister(203, 'Unknown Error in 2', err2, null, fields2)
+                        responseRegister(203, -2, err2, null, fields2)
                     }
                 })
             } else {
-                responseRegister(203, 'Unknown Error in 1', err, null, res)
+                responseRegister(203, -1, err.sqlMessage, null, res)
             }
         })
     } else {
@@ -94,7 +98,7 @@ app.post('/registeruserascustomer', (req, res) => {
 
 app.post('/logincustomer', (req, res) => {
     const {email, username, password} = req.body;
-    if(email || username || password != null){
+    if(email && username && password){
         let sql
         if(username != 'unused')
             sql = `SELECT * FROM user WHERE username = '${username}' AND password = '${password}'`
@@ -102,21 +106,46 @@ app.post('/logincustomer', (req, res) => {
         else 
             sql = `SELECT * FROM user WHERE email = '${email}' AND password = '${password}'`
         db.query(sql, (err, fields) => {
-            let keyLogin = CryptoJS.HmacSHA256(fields.username, process.env.LOCKED_API_CUSTOMER)
-            keyLogin = CryptoJS.enc.Base64.stringify(keyLogin)
-            if(fields.length > 0)
+            if(fields.length > 0){
+                let keyLogin = CryptoJS.HmacSHA256(fields[0].username, process.env.LOCKED_API_CUSTOMER)
+                keyLogin = CryptoJS.enc.Base64.stringify(keyLogin)
                 responseRegister(200, 1, fields, keyLogin, res)
+            }
             else
                 responseRegister(203, 0, null, null, res)
         })
     } else { 
-        responseRegister(203, 0, null, res)
+        responseRegister(203, 0, null, null, res)
     }
 })
 
 app.get('/sendmail', (req, res) => {
     console.log("Sending Email");
     sendEmailOps(process.env.EMAIL_OPS_CORE, process.env.EMAIL_OPS_CORE_PSWD, "Kryptonxas", res)
+})
+
+app.get('/forgetpassword', (req, res) => {
+    db.query(`SELECT * FROM USER WHERE email = '${req.query.email}'`, (err, result) => {
+        if (err) throw err
+        if(result.length > 0){
+            console.log(result[0].username);
+            console.log(salt);
+            let linkresetpassword = bcrypt.hashSync(result[0].username, salt);
+            console.log(linkresetpassword);
+            let urlResetPassword = `http://localhost:4200/api/resetpassword?email=${req.query.email}&salt=${linkresetpassword}`
+            resetpasswordSender(process.env.EMAIL_OPS_CORE, process.env.EMAIL_OPS_CORE_PSWD, result[0].username, req.query.email, urlResetPassword, res)
+        }
+        else
+            res.send("This email is not registerd in OPS Core !")
+    })
+})
+
+app.get('/resetpassword', (req, res) => {
+    req.query.email
+    let a = req.query.salt
+    console.log(bcrypt.compareSync("angularkiddie@gmail.com", a));
+    let ax = bcrypt.compareSync("username", a)
+    res.send(`'${ax}'`)
 })
 
 app.listen(port, () => {

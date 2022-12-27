@@ -1,9 +1,9 @@
 
 var nodemailer = require('nodemailer');
-let templateMail = require('./mails/templatemail');
+let templateMail = require('./templatemail');
 
 
-const sendEmailOps = (email, pass, username, res) =>{
+const sendEmailOps = (email, pass, username, toemail) =>{
     let source = templateMail(username)
     var transporter = nodemailer.createTransport({
         service: 'gmail',
@@ -15,15 +15,17 @@ const sendEmailOps = (email, pass, username, res) =>{
 
     var mailOptions = {
         from:  `${email}`,
-        to: 'angularkiddie@gmail.com',
-        subject: 'Welcome To OPS Corexv',
+        to: toemail,
+        subject: 'Welcome To OPS Core',
         html: source
     };
-
+    console.log("Trying to sending an email");
     transporter.sendMail(mailOptions, (err, info) => {
-        if (err) return res.send(`Error: ${err}`);
-        console.log('Email sent: ' + info.response);
-        res.send(`Email sent: ${info.response}`)
+        if (err){
+            console.log(err);
+        } else {
+            console.log('Email sent: ' + info.response);
+        }
     });
 }
 
