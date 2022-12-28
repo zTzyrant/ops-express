@@ -11,8 +11,6 @@ const CryptoJS = require('crypto-js')
 const sendEmailOps = require('./mails/sendemail')
 const generator = require('generate-password');
 const resetpasswordSender = require('./mails/sendemailrestartpass')
-const bcrypt = require('bcrypt')
-const salt = bcrypt.genSaltSync(10);
 
 app.use(cors({
   methods: 'GET,POST,PATCH,DELETE,OPTIONS',
@@ -68,11 +66,11 @@ app.post('/registeruser', (req, res) => {
     })
 })
 
+// register customer
 app.post('/registeruserascustomer', (req, res) => {
     const {username, password, fullname, genderselect, email, phone} = req.body
     console.log(req.body);
     if(username !== '' && password !== '' && fullname !== '' && genderselect !== '' && email !== '' && phone !== ''){
-        console.log("iamfukinghere");
         const sql = `INSERT INTO user(userid, username, password, fullname, gender, email, phone)
         VALUES ('', '${username}', '${password}', '${fullname}', '${genderselect}', '${email}', '${phone}')`
         db.query(sql, (err, fields)=>{
@@ -96,6 +94,7 @@ app.post('/registeruserascustomer', (req, res) => {
     }
 })
 
+// login customer
 app.post('/logincustomer', (req, res) => {
     const {email, username, password} = req.body;
     if(email && username && password){
@@ -124,28 +123,90 @@ app.get('/sendmail', (req, res) => {
     sendEmailOps(process.env.EMAIL_OPS_CORE, process.env.EMAIL_OPS_CORE_PSWD, "Kryptonxas", res)
 })
 
+
+// req forgot password customer Reset password part 1
 app.get('/forgetpassword', (req, res) => {
-    db.query(`SELECT * FROM USER WHERE email = '${req.query.email}'`, (err, result) => {
+
+    db.query(`SELECT * FROM user INNER JOIN consumer ON user.userid = consumer.userid WHERE user.email = '${req.query.email}'`, (err, result) => {
         if (err) throw err
+        console.log("ini error" + err);
         if(result.length > 0){
             console.log(result[0].username);
-            console.log(salt);
-            let linkresetpassword = bcrypt.hashSync(result[0].username, salt);
-            console.log(linkresetpassword);
+            console.log("Generate Token");
+            console.log(req.query.email);
+            let encrypted = CryptoJS.AES.encrypt(req.query.email, process.env.LOCKED_API_PASSWORD);
+            let linkresetpassword = encrypted.toString()
+            console.log("Token: " + linkresetpassword);
             let urlResetPassword = `http://localhost:4200/api/resetpassword?email=${req.query.email}&salt=${linkresetpassword}`
             resetpasswordSender(process.env.EMAIL_OPS_CORE, process.env.EMAIL_OPS_CORE_PSWD, result[0].username, req.query.email, urlResetPassword, res)
         }
         else
-            res.send("This email is not registerd in OPS Core !")
+            res.send('-1')
     })
 })
 
-app.get('/resetpassword', (req, res) => {
-    req.query.email
-    let a = req.query.salt
-    console.log(bcrypt.compareSync("angularkiddie@gmail.com", a));
-    let ax = bcrypt.compareSync("username", a)
-    res.send(`'${ax}'`)
+app.get('/checkToken', (req, res) => {
+    let tempSalt = req.query.salt
+    let replaced = tempSalt.split(' ').join('+');
+    let decrypted = CryptoJS.AES.decrypt(replaced, process.env.LOCKED_API_PASSWORD);
+    console.log("New: " + decrypted.toString(CryptoJS.enc.Utf8) + " From: " + req.query.email);
+    let checkToken = decrypted.toString(CryptoJS.enc.Utf8) === req.query.email
+
+    if(checkToken){
+        res.send('1')
+    } else {
+        res.send('-1')
+    }
+
+})
+
+// Reset password part 2
+app.get('/updatePassowrd', (req, res) => {
+    const {email, salt, newpassword} = req.query;
+    let tempSalt = salt
+    let replaced = tempSalt.split(' ').join('+');
+    console.log(replaced);
+    let tempNewPassword = newpassword
+    let newPass = tempNewPassword.split(' ').join('+');
+
+    let decrypted = CryptoJS.AES.decrypt(replaced, process.env.LOCKED_API_PASSWORD);
+    let checkToken = decrypted.toString(CryptoJS.enc.Utf8) === email
+    if(checkToken){
+        console.log(`Starting to update password to: ${email}`);
+        db.query(`UPDATE user set password = '${newPass}' WHERE user.email = '${email}'`, (err, result) => {
+            if(err) throw err
+            console.log(result);
+            if(result.affectedRows > 0){
+                console.log(`Success Update password to: { ${newPass} } for email: ${email}`);
+                res.send('1')
+            }else{
+                res.send('-2')
+            }
+        })
+    } else {
+        res.send('-1')
+    }
+})
+
+// update cunsomer
+app.post('/updateCustomer', (req, res) => {
+    const {email, password, fullname, gender} = req.body;
+    console.log(req.body);
+    console.log(email);
+    if(email !== "" && password !== "" && fullname !== "" && gender !== ""){
+        db.query(`UPDATE user set fullname = '${fullname}', gender = '${gender}' WHERE user.email = '${email}' AND user.password = '${password}'`, (err, result) => {
+            if(err) throw err
+                console.log(result);
+                if(result.affectedRows > 0){
+                    console.log(`Success Update account information for email: ${email}`);
+                    res.send('1')
+                }else{
+                    res.send('-2')
+            }
+        })
+    } else{
+        res.send('0')
+    }
 })
 
 app.listen(port, () => {
