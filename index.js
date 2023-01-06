@@ -15,7 +15,7 @@ const resetpasswordSender = require('./mails/sendemailrestartpass')
 app.use(cors({
   methods: 'GET,POST,PATCH,DELETE,OPTIONS',
   optionsSuccessStatus: 200,
-  origin: 'http://localhost:4200'
+  origin: ['http://localhost:4200']
 }));
 
 app.use(bodyparser.json())
@@ -98,20 +98,40 @@ app.post('/registeruserascustomer', (req, res) => {
 app.post('/logincustomer', (req, res) => {
     const {email, username, password} = req.body;
     if(email && username && password){
-        let sql
+        let sql, defsql = 'SELECT * FROM user'
         if(username != 'unused')
-            sql = `SELECT * FROM user WHERE username = '${username}' AND password = '${password}'`
+            sql = `WHERE username = '${username}' AND password = '${password}'`
 
         else 
-            sql = `SELECT * FROM user WHERE email = '${email}' AND password = '${password}'`
-        db.query(sql, (err, fields) => {
+            sql = `WHERE email = '${email}' AND password = '${password}'`
+
+        db.query(`${defsql} INNER JOIN consumer ON user.userid = consumer.userid ${sql}`, (err, fields) => {
+            if (err) throw err;
             if(fields.length > 0){
                 let keyLogin = CryptoJS.HmacSHA256(fields[0].username, process.env.LOCKED_API_CUSTOMER)
                 keyLogin = CryptoJS.enc.Base64.stringify(keyLogin)
                 responseRegister(200, 1, fields, keyLogin, res)
+            } else {
+                db.query(`${defsql} INNER JOIN developer ON user.userid = developer.userid ${sql}`, (err, fields) => {
+                    if (err) throw err;
+                    if(fields.length > 0){
+                        let keyLogin = CryptoJS.HmacSHA256(fields[0].username, process.env.LOCKED_API_CUSTOMER)
+                        keyLogin = CryptoJS.enc.Base64.stringify(keyLogin)
+                        responseRegister(200, 1, fields, keyLogin, res)
+                    } else {
+                        db.query(`${defsql} INNER JOIN adminprinting ON user.userid = adminprinting.userid ${sql}`, (err, fields) => {
+                            if (err) throw err;
+                            if(fields.length > 0){
+                                let keyLogin = CryptoJS.HmacSHA256(fields[0].username, process.env.LOCKED_API_CUSTOMER)
+                                keyLogin = CryptoJS.enc.Base64.stringify(keyLogin)
+                                responseRegister(200, 1, fields, keyLogin, res)
+                            } else 
+                                responseRegister(203, 0, null, null, res)         
+                        })
+                    }
+                })
             }
-            else
-                responseRegister(203, 0, null, null, res)
+                
         })
     } else { 
         responseRegister(203, 0, null, null, res)
@@ -207,6 +227,22 @@ app.post('/updateCustomer', (req, res) => {
     } else{
         res.send('0')
     }
+})
+
+app.post('/getconsumerdatas', (req, res) => {
+    console.log("iam here");
+    const {email, password} = req.body;
+    let sql = `SELECT * FROM user WHERE email = '${email}' AND password = '${password}'`
+    db.query(sql, (err, fields) => {
+        if(fields.length > 0){
+            console.log(fields);
+            let keyLogin = CryptoJS.HmacSHA256(fields[0].username, process.env.LOCKED_API_CUSTOMER)
+            keyLogin = CryptoJS.enc.Base64.stringify(keyLogin)
+            responseRegister(200, 1, fields, keyLogin, res)
+        }
+        else
+            responseRegister(203, 0, null, null, res)
+    })
 })
 
 app.listen(port, () => {
