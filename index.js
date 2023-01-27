@@ -9,14 +9,14 @@ const response = require('./response/response')
 const responseRegister = require('./response/responseregist')
 const CryptoJS = require('crypto-js')
 const sendEmailOps = require('./mails/sendemail')
-const generator = require('generate-password');
 const resetpasswordSender = require('./mails/sendemailrestartpass')
 
-app.use(cors({
-  methods: 'GET,POST,PATCH,DELETE,OPTIONS',
-  optionsSuccessStatus: 200,
-  origin: ['http://localhost:4200']
-}));
+const formidable = require('formidable')
+const mv = require('mv');
+const pdf = require('pdf-page-counter');
+const fs = require('fs')
+
+app.use(cors());
 
 app.use(bodyparser.json())
 
@@ -244,6 +244,55 @@ app.post('/getconsumerdatas', (req, res) => {
             responseRegister(203, 0, null, null, res)
     })
 })
+
+app.post('/uploadorderpdf', (req, res) => {
+    var form = new formidable.IncomingForm();
+    let msg = ''
+    let scode = 0
+    form.parse(req, function (err, fields, files) {
+        let oldpath = files.anyfilesnames.filepath;
+        let filename = files.anyfilesnames.newFilename + Date.now() + '.pdf'
+        let newpath = __dirname + "/upload/order/document/" + filename;
+
+        mv(oldpath, newpath, function (err) {
+            if (err) { 
+                msg = err
+                scode = 406
+                throw err
+            } else {
+                msg = 'file uploaded successfully'
+                scode = 202
+            }
+
+            res.status(200).json({
+                resUpload: {
+                    statusCode: scode,
+                    filePath: newpath,
+                    message: msg
+                }
+            })
+        });
+    });
+});
+
+// check number of pages
+app.post('/calcpages', (req, res) => {
+    var form = new formidable.IncomingForm();
+    let scode = 200
+    form.parse(req, function (err, fields, files) {
+        let oldpath = files.anyfilesnames.filepath
+        let dataBuffer = fs.readFileSync(`${oldpath}`);
+ 
+        pdf(dataBuffer).then(function(data) {
+            res.status(200).json({
+                resUpload: {
+                    statusCode: scode,
+                    totalPages: data.numpages,
+                }
+            })
+        });
+    })
+});
 
 app.listen(port, () => {
   console.log(`Example app listening on port ${port}`)
