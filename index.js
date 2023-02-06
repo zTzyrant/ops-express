@@ -19,7 +19,8 @@ const fs = require('fs')
 app.use(cors());
 
 app.use(bodyparser.json())
-
+var publicDir = require('path').join(__dirname,'upload'); 
+app.use('/upload',express.static(publicDir)); 
 // routes / URL / endpoint
 
 app.get('/', (req, res) => {
@@ -264,7 +265,7 @@ app.post('/uploadorderpdf', (req, res) => {
         let oldpath = files.anyfilesnames.filepath;
         let filename = files.anyfilesnames.newFilename + Date.now() + '.pdf'
         let newpath = __dirname + "/upload/order/document/" + filename;
-
+        let retPath = "/upload/order/document/" + filename;
         mv(oldpath, newpath, function (err) {
             if (err) { 
                 msg = err
@@ -278,7 +279,7 @@ app.post('/uploadorderpdf', (req, res) => {
             res.status(200).json({
                 resUpload: {
                     statusCode: scode,
-                    filePath: newpath,
+                    filePath: retPath,
                     message: msg
                 }
             })
@@ -378,20 +379,20 @@ app.get('/show-merchant', (req, res) => {
 // register merchant
 app.post('/registermerchant', (req, res) => {
     const {
-        fulladdress, city, postcode, phoneAddress, note, // table address
+        fulladdress, city, postcode, phoneaddress, note, // table address
         username, password, fullname, gender, email, phone, // table user
         postition, cardid, // table adminprinting
-        merchantname, datecreated, opentime, closetime, merchantlogo, ownerid // table merchant
+        merchantname, datecreated, opentime, closetime, merchantlogo  // table merchant
     } = req.body
 
     addressSQL = `INSERT INTO address (addressid, fulladdress, city, postcode, phoneAddress, note) VALUES 
-        (NULL, '${fulladdress}', '${city}', '${postcode}', '${phoneAddress}', '${note}')`
+        (NULL, '${fulladdress}', '${city}', '${postcode}', '${phoneaddress}', '${note}')`
     
     db.query(addressSQL, (err1, fields1)=>{ // add address
         if(err1) throw err1
 
         merchantSQL = `INSERT INTO merchant (merchantid, merchantname, datecreated, opentime, closetime, merchantlogo, ownerid, addressid) 
-        VALUES (NULL, '${merchantname}', '${datecreated}', '${opentime}', '${closetime}', '${merchantlogo}', '${ownerid}', '${fields1.insertId}') `
+        VALUES (NULL, '${merchantname}', '${datecreated}', '${opentime}', '${closetime}', '${merchantlogo}', '', '${fields1.insertId}') `
 
         db.query(merchantSQL, (err2, fields2)=>{ // add merchant
             if(err2) throw err2
@@ -416,6 +417,46 @@ app.post('/registermerchant', (req, res) => {
             })
         })
     })    
+})
+
+console.log(publicDir);
+app.post('/uploadlogomerchant', (req, res) => {
+    var form = new formidable.IncomingForm();
+    let msg = ''
+    let scode = 0
+    form.parse(req, function (err, fields, files) {
+    let typefile = files.anyfilesnames.mimetype
+    let formatedType = typefile.split("/", 2);
+
+        let oldpath = files.anyfilesnames.filepath;
+        let filename = files.anyfilesnames.newFilename + Date.now() + `.${formatedType[1]}`
+        let newpath = __dirname + "/upload/merchant/images/logo/" + filename;
+        let fullUrl = req.protocol + '://' + req.get('host');
+        let retPath = fullUrl + "/upload/merchant/images/logo/" + filename;
+        mv(oldpath, newpath, function (err) {
+            if (err) { 
+                msg = err
+                scode = 406
+                throw err
+            } else {
+                msg = 'file uploaded successfully'
+                scode = 202
+            }
+
+            res.status(200).json({
+                resUpload: {
+                    statusCode: scode,
+                    filePath: retPath,
+                    message: msg
+                }
+            })
+        });
+    });
+});
+
+app.post('/uploadproductmerchant', (req, res) => {
+    console.log(req.body);
+    res.send(req.body)
 })
 
 app.listen(port, () => {
