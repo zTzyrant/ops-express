@@ -16,6 +16,8 @@ const mv = require('mv');
 const pdf = require('pdf-page-counter');
 const fs = require('fs')
 
+const moment = require('moment')
+
 app.use(cors());
 
 app.use(bodyparser.json())
@@ -154,8 +156,8 @@ let month = ("0" + (date_ob.getMonth() + 1)).slice(-2);
 // current year
 let year = date_ob.getFullYear();
 
-let datemow = `$${year}-${month}-${date}`
-console.log(datemow);
+let datenow = `${year}-${month}-${date}`
+console.log(datenow);
 
 
 // req forgot password customer Reset password part 1
@@ -368,8 +370,8 @@ app.get('/show-merchant', (req, res) => {
     query = `SELECT * FROM merchant INNER JOIN address ON merchant.addressid = address.addressid `
     db.query(query, (err, fields) => {
         fields = fields.map(row => {
-            row.datecreated = row.datecreated.toISOString().split('T')[0];
-            
+            // row.datecreated = row.datecreated.toISOString().split('T')[0];
+            row.datecreated = moment(row.datecreated).utc(8).format('YYYY-MM-DD')
             return row;
         });
         res.status(200).json(fields)
@@ -381,45 +383,47 @@ app.post('/registermerchant', (req, res) => {
     const {
         fulladdress, city, postcode, phoneaddress, note, // table address
         username, password, fullname, gender, email, phone, // table user
-        postition, cardid, // table adminprinting
-        merchantname, datecreated, opentime, closetime, merchantlogo  // table merchant
+        position, cardid, // table adminprinting
+        merchuname, merchantname, opentime, closetime, merchantlogo  // table merchant
     } = req.body
 
-    addressSQL = `INSERT INTO address (addressid, fulladdress, city, postcode, phoneAddress, note) VALUES 
+    if(fulladdress && city && postcode && phoneaddress && 
+        username && password && fullname && gender && email && phone && 
+        position && cardid && 
+        merchuname && merchantname && opentime && closetime && merchantlogo 
+    ){
+        addressSQL = `INSERT INTO address (addressid, fulladdress, city, postcode, phoneAddress, note) VALUES 
         (NULL, '${fulladdress}', '${city}', '${postcode}', '${phoneaddress}', '${note}')`
-    
-    db.query(addressSQL, (err1, fields1)=>{ // add address
-        if(err1) throw err1
-
-        merchantSQL = `INSERT INTO merchant (merchantid, merchantname, datecreated, opentime, closetime, merchantlogo, ownerid, addressid) 
-        VALUES (NULL, '${merchantname}', '${datecreated}', '${opentime}', '${closetime}', '${merchantlogo}', '', '${fields1.insertId}') `
-
-        db.query(merchantSQL, (err2, fields2)=>{ // add merchant
-            if(err2) throw err2
-            
-            userSQL = `INSERT INTO user (userid, username, password, fullname, gender, email, phone) 
-            VALUES (NULL, '${username}', '${password}', '${fullname}', '${gender}', '${email}', '${phone}') `
-
-            db.query(userSQL, (err3, fields3)=>{ // add user
-                if(err3) throw err3
-
-                adminprintingSQL = `INSERT INTO adminprinting (adminprintingid, position, cardid, merchantid, userid) 
-                VALUES (NULL, '${postition}', '${cardid}', '${fields2.insertId}', '${fields3.insertId}') `
-
-                db.query(adminprintingSQL, (err4, fields4)=>{ // add adminprinting
-                    if(err4) throw err4
-                    setAdminIdasOwner = `UPDATE merchant SET ownerid = '${fields4.insertId}' WHERE merchant.merchantid = '${fields2.insertId}'`
-                    db.query(setAdminIdasOwner, (err5, fields5) => {
-                        if(err5) throw err5
-                        res.send('1')
+        db.query(addressSQL, (err1, fields1)=>{ // add address
+            if(err1) throw err1
+            merchantSQL = `INSERT INTO merchant (merchantid, merchantuname, merchantname, datecreated, opentime, closetime, merchantlogo, ownerid, addressid) 
+            VALUES (NULL, '${merchuname}', '${merchantname}', '${datenow}', '${opentime}', '${closetime}', '${merchantlogo}', '', '${fields1.insertId}') `
+            db.query(merchantSQL, (err2, fields2)=>{ // add merchant
+                if(err2) throw err2
+                userSQL = `INSERT INTO user (userid, username, password, fullname, gender, email, phone) 
+                VALUES (NULL, '${username}', '${password}', '${fullname}', '${gender}', '${email}', '${phone}') `
+                db.query(userSQL, (err3, fields3)=>{ // add user
+                    if(err3) throw err3
+                    adminprintingSQL = `INSERT INTO adminprinting (adminprintingid, position, cardid, merchantid, userid) 
+                    VALUES (NULL, '${position}', '${cardid}', '${fields2.insertId}', '${fields3.insertId}') `
+                    db.query(adminprintingSQL, (err4, fields4)=>{ // add adminprinting
+                        if(err4) throw err4
+                        setAdminIdasOwner = `UPDATE merchant SET ownerid = '${fields4.insertId}' WHERE merchant.merchantid = '${fields2.insertId}'`
+                        db.query(setAdminIdasOwner, (err5, fields5) => {
+                            if(err5) throw err5
+                            res.send('1')
+                        })
                     })
                 })
             })
         })
-    })    
+    } else{
+        res.send("-1")
+    }
+
+    
 })
 
-console.log(publicDir);
 app.post('/uploadlogomerchant', (req, res) => {
     var form = new formidable.IncomingForm();
     let msg = ''
