@@ -18,6 +18,10 @@ const fs = require('fs')
 
 const moment = require('moment')
 
+// JWT
+const jwt = require('jsonwebtoken');
+const { env } = require('process')
+
 app.use(cors());
 
 app.use(bodyparser.json())
@@ -115,24 +119,7 @@ app.post('/logincustomer', (req, res) => {
                 keyLogin = CryptoJS.enc.Base64.stringify(keyLogin)
                 responseRegister(200, 1, fields, keyLogin, res)
             } else {
-                db.query(`${defsql} INNER JOIN developer ON user.userid = developer.userid ${sql}`, (err, fields) => {
-                    if (err) throw err;
-                    if(fields.length > 0){
-                        let keyLogin = CryptoJS.HmacSHA256(fields[0].username, process.env.LOCKED_API_CUSTOMER)
-                        keyLogin = CryptoJS.enc.Base64.stringify(keyLogin)
-                        responseRegister(200, 1, fields, keyLogin, res)
-                    } else {
-                        db.query(`${defsql} INNER JOIN adminprinting ON user.userid = adminprinting.userid ${sql}`, (err, fields) => {
-                            if (err) throw err;
-                            if(fields.length > 0){
-                                let keyLogin = CryptoJS.HmacSHA256(fields[0].username, process.env.LOCKED_API_CUSTOMER)
-                                keyLogin = CryptoJS.enc.Base64.stringify(keyLogin)
-                                responseRegister(200, 1, fields, keyLogin, res)
-                            } else 
-                                responseRegister(203, 0, null, null, res)         
-                        })
-                    }
-                })
+                responseRegister(203, 0, null, null, res)
             }
                 
         })
@@ -384,20 +371,20 @@ app.post('/registermerchant', (req, res) => {
         fulladdress, city, postcode, phoneaddress, note, // table address
         username, password, fullname, gender, email, phone, // table user
         position, cardid, // table adminprinting
-        merchuname, merchantname, opentime, closetime, merchantlogo  // table merchant
+        merchantuname, merchantname, opentime, closetime, merchantlogo  // table merchant
     } = req.body
 
     if(fulladdress && city && postcode && phoneaddress && 
         username && password && fullname && gender && email && phone && 
         position && cardid && 
-        merchuname && merchantname && opentime && closetime && merchantlogo 
+        merchantuname && merchantname && opentime && closetime && merchantlogo 
     ){
         addressSQL = `INSERT INTO address (addressid, fulladdress, city, postcode, phoneAddress, note) VALUES 
         (NULL, '${fulladdress}', '${city}', '${postcode}', '${phoneaddress}', '${note}')`
         db.query(addressSQL, (err1, fields1)=>{ // add address
             if(err1) throw err1
             merchantSQL = `INSERT INTO merchant (merchantid, merchantuname, merchantname, datecreated, opentime, closetime, merchantlogo, ownerid, addressid) 
-            VALUES (NULL, '${merchuname}', '${merchantname}', '${datenow}', '${opentime}', '${closetime}', '${merchantlogo}', '', '${fields1.insertId}') `
+            VALUES (NULL, '${merchantuname}', '${merchantname}', '${datenow}', '${opentime}', '${closetime}', '${merchantlogo}', '', '${fields1.insertId}') `
             db.query(merchantSQL, (err2, fields2)=>{ // add merchant
                 if(err2) throw err2
                 userSQL = `INSERT INTO user (userid, username, password, fullname, gender, email, phone) 
@@ -458,11 +445,69 @@ app.post('/uploadlogomerchant', (req, res) => {
     });
 });
 
+
+// developer add admin printing
+app.get('/get-merchantadmin/:merchantid?', (req, res) => {
+    let query = `SELECT * FROM merchant INNER JOIN adminprinting ON merchant.merchantid = 
+        adminprinting.merchantid INNER JOIN user ON adminprinting.userid = 
+        user.userid WHERE merchant.merchantid = '${req.params.merchantid}'`
+
+    db.query(query, (err, fields) => {
+        fields = fields.map(row => {
+            row.datecreated = moment(row.datecreated).utc(8).format('YYYY-MM-DD')
+            return row;
+        });
+        res.status(200).json(fields)
+    })
+})
+
 app.post('/uploadproductmerchant', (req, res) => {
     console.log(req.body);
     res.send(req.body)
 })
 
+app.post('/decode-jwt-from-angular', (req, res) => {
+    res.send(req.body.params)
+})
+
+app.post('/secure/net/login', (req, res) => {
+    const {username, password} = req.body
+    console.log(req.body);
+    if(username && password){
+        let query = `SELECT * FROM user INNER JOIN developer ON user.userid = developer.userid WHERE username = '${username}' AND password = '${password}'`
+        db.query(query, (err, fields) => {
+            console.log(fields);
+            if(fields){
+                var token = jwt.sign({fields}, process.env.LOCKED_SECREAT_JWT);
+                res.send({statusLogin: '1', authLogin: token})
+            } else {
+                res.send('-2')
+            }
+        })
+
+    } else {
+        res.send('-1')
+    }
+})
+
+app.post('/secure/net/check/dev/auth', (req, res) => {
+    let AUTH = req.body.authdev
+    console.log(AUTH);
+    try {
+        var decoded = jwt.verify(AUTH, process.env.LOCKED_SECREAT_JWT);
+        console.log(decoded);
+        res.send('1')
+    } catch(err) {
+        console.log('Error Session Developer From Outside');
+        res.send('-1')
+    } 
+})
+
 app.listen(port, () => {
   console.log(`Example app listening on port ${port}`)
 })
+
+
+
+
+
