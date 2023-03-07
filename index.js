@@ -470,6 +470,7 @@ app.post('/decode-jwt-from-angular', (req, res) => {
     res.send(req.body.params)
 })
 
+// Developer Login with this code
 app.post('/secure/net/login', (req, res) => {
     const {username, password} = req.body
     console.log(req.body);
@@ -490,13 +491,22 @@ app.post('/secure/net/login', (req, res) => {
     }
 })
 
+// check dev login auth if its true
 app.post('/secure/net/check/dev/auth', (req, res) => {
     let AUTH = req.body.authdev
-    console.log(AUTH);
     try {
         var decoded = jwt.verify(AUTH, process.env.LOCKED_SECREAT_JWT);
-        console.log(decoded);
-        res.send('1')
+        console.log(decoded.fields);
+        let query = `SELECT * FROM user INNER JOIN developer ON user.userid = developer.userid WHERE username = '${decoded.fields[0].username}' AND password = '${decoded.fields[0].password}'`
+        db.query(query, (err, fields) => {
+            console.log(fields);
+            if(fields){
+                console.log('true user');
+                res.send('1')
+            } else {
+                res.send('-2')
+            }
+        })
     } catch(err) {
         console.log('Error Session Developer From Outside');
         res.send('-1')
