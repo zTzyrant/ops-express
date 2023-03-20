@@ -22,7 +22,10 @@ const moment = require('moment')
 const jwt = require('jsonwebtoken');
 const { env } = require('process')
 
-app.use(cors());
+app.use(cors({
+    origin: "*",
+    credentials: true
+}));
 
 app.use(bodyparser.json())
 var publicDir = require('path').join(__dirname,'upload'); 
@@ -361,7 +364,16 @@ app.get('/show-merchant', (req, res) => {
             row.datecreated = moment(row.datecreated).utc(8).format('YYYY-MM-DD')
             return row;
         });
-        res.status(200).json(fields)
+        query1 = `SELECT COUNT(DISTINCT adminprintingid) AS 'total' FROM merchant 
+            LEFT JOIN adminprinting ON adminprinting.merchantid = merchant.merchantid 
+            GROUP BY merchant.merchantid
+        `
+        db.query(query1, (err1, fields1) => {
+            fields.forEach((xDat, indx) => {
+                fields[indx] = {merchdatas: xDat, admin: fields1[indx]}
+            })
+         res.status(200).json(fields)
+        })
     })
 })
 
@@ -513,6 +525,95 @@ app.post('/secure/net/check/dev/auth', (req, res) => {
     } 
 })
 
+//  Get Merchant Details by id
+app.get('/show-merchant/details/:merchantid?', (req, res) => {
+    let query = `SELECT * FROM merchant INNER JOIN address ON merchant.addressid = address.addressid WHERE merchantid = ${req.params.merchantid}`
+    try {
+        db.query(query, (err, fields) => {
+            fields = fields.map(row => {
+                row.datecreated = moment(row.datecreated).utc(8).format('YYYY-MM-DD')
+                return row;
+            });
+            console.log(fields);
+            res.send({statusCode: '1', data: fields})
+        })
+    } catch (error) {
+        res.send({statusCode: '-1'})
+    }
+})
+
+
+// delete merhcant from developer
+app.post('/unchanges/developer/delete/merchant', (req, res) => {
+    const {merchantid, addressid} = req.body
+    let query1 = `DELETE ` + `user` +` FROM user INNER JOIN adminprinting ON user.userid = adminprinting.userid WHERE adminprinting.merchantid = ${merchantid}`
+    let query2 = `DELETE address FROM address INNER JOIN merchant ON address.addressid = merchant.addressid WHERE merchant.addressid = ${addressid}`
+    let sqlStatus = '1'
+
+   
+    db.query(query1, (err) => {
+        if (err) {
+            sqlStatus = '-2'
+        }
+    })
+    db.query(query2, (err) => {
+        if (err) {
+            sqlStatus = '-3'
+        }
+    })
+    res.send(sqlStatus)
+})
+
+
+// update merchant codes
+app.put('/changes/develepor/update/merchant', (req, res) => {
+    const {
+        // Merchant Info
+        merchantid, edmerchuname, edmerchname, edmerchdate,
+        edmerchopen, edmerchclose, edmerchantlogo,
+        // Merchant Address
+        addressid, edmerchaddress, edmerchcity, edmerchpostcode, 
+        edmerchtcp, edmerchtinfo
+    } = req.body
+
+    sqlMerchant = `UPDATE merchant SET merchantuname = '${edmerchuname}',
+        merchantname = '${edmerchname}', datecreated = '${edmerchdate}',
+        opentime = '${edmerchopen}', closetime = '${edmerchclose}',
+        merchantlogo = '${edmerchantlogo}'
+        WHERE merchant.merchantid = ${merchantid}
+    `
+    sqlAddress = `UPDATE address SET fulladdress = '${edmerchaddress}', city = 
+        '${edmerchcity}', postcode = '${edmerchpostcode}', phoneAddress = '${edmerchtcp}', 
+        note = '${edmerchtinfo}' WHERE address.addressid = ${addressid}
+    `
+
+    if(edmerchantlogo === "" || edmerchantlogo === null){
+        sqlMerchant = `UPDATE merchant SET merchantuname = '${edmerchuname}',
+            merchantname = '${edmerchname}', datecreated = '${edmerchdate}', 
+            opentime = '${edmerchopen}', closetime = '${edmerchclose}'
+            WHERE merchant.merchantid = ${merchantid}
+        `    
+    }
+    
+    let msg = [], statusCode = '1'
+    db.query(sqlMerchant, (err, fields) => {
+        console.log(fields);
+        if(err){
+            msg.push(err)
+            statusCode = '-1'
+        }
+        db.query(sqlAddress, (err1, fields1) => {
+            console.log({st: 'AR', fields1});
+            if(err1){
+                msg.push(err1)
+                statusCode = '-2'
+            }
+            res.send({msg, statusCode})
+            
+        })
+    
+    })
+})
 app.listen(port, () => {
   console.log(`Example app listening on port ${port}`)
 })
