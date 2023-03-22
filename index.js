@@ -509,17 +509,19 @@ app.post('/secure/net/check/dev/auth', (req, res) => {
     try {
         var decoded = jwt.verify(AUTH, process.env.LOCKED_SECREAT_JWT);
         console.log(decoded.fields);
-        let query = `SELECT * FROM user INNER JOIN developer ON user.userid = developer.userid WHERE username = '${decoded.fields[0].username}' AND password = '${decoded.fields[0].password}'`
+        let query = `SELECT user.userid, username, fullname, gender, email, phone, devid, position
+            FROM user INNER JOIN developer ON user.userid = developer.userid WHERE username = '${decoded.fields[0].username}' AND password = '${decoded.fields[0].password}'`
         db.query(query, (err, fields) => {
             console.log(fields);
             if(fields){
                 console.log('true user');
-                res.send('1')
+                res.send({statQuo: '1', datax: fields})
             } else {
-                res.send('-2')
+                res.send({statQuo: '-2'})
             }
         })
     } catch(err) {
+        console.log(err);
         console.log('Error Session Developer From Outside');
         res.send('-1')
     } 
