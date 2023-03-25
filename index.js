@@ -153,14 +153,14 @@ console.log(datenow);
 // req forgot password customer Reset password part 1
 app.get('/forgetpassword', (req, res) => {
 
-    db.query(`SELECT * FROM user INNER JOIN consumer ON user.userid = consumer.userid WHERE user.email = '${req.query.email}'`, (err, result) => {
+    db.query(`SELECT * FROM user WHERE user.email = '${req.query.email}'`, (err, result) => {
         if (err) throw err
         console.log("ini error" + err);
         if(result.length > 0){
             console.log(result[0].username);
             console.log("Generate Token");
             console.log(req.query.email);
-            let encrypted = CryptoJS.AES.encrypt(req.query.email, process.env.LOCKED_API_PASSWORD + datemow);
+            let encrypted = CryptoJS.AES.encrypt(req.query.email, process.env.LOCKED_API_PASSWORD + datenow);
             let linkresetpassword = encrypted.toString()
             console.log("Token: " + linkresetpassword);
             let urlResetPassword = `http://localhost:4200/api/resetpassword?email=${req.query.email}&salt=${linkresetpassword}`
@@ -174,7 +174,7 @@ app.get('/forgetpassword', (req, res) => {
 app.get('/checkToken', (req, res) => {
     let tempSalt = req.query.salt
     let replaced = tempSalt.split(' ').join('+');
-    let decrypted = CryptoJS.AES.decrypt(replaced, process.env.LOCKED_API_PASSWORD + datemow);
+    let decrypted = CryptoJS.AES.decrypt(replaced, process.env.LOCKED_API_PASSWORD + datenow);
     console.log("New: " + decrypted.toString(CryptoJS.enc.Utf8) + " From: " + req.query.email);
     let checkToken = decrypted.toString(CryptoJS.enc.Utf8) === req.query.email
     if(checkToken){
@@ -193,7 +193,7 @@ app.get('/updatePassowrd', (req, res) => {
     let tempNewPassword = newpassword
     let newPass = tempNewPassword.split(' ').join('+');
 
-    let decrypted = CryptoJS.AES.decrypt(replaced, process.env.LOCKED_API_PASSWORD + datemow);
+    let decrypted = CryptoJS.AES.decrypt(replaced, process.env.LOCKED_API_PASSWORD + datenow);
     let checkToken = decrypted.toString(CryptoJS.enc.Utf8) === email
     if(checkToken){
         console.log(`Starting to update password to: ${email}`);
@@ -614,7 +614,7 @@ app.put('/changes/developer/update/merchant', (req, res) => {
 
 // Dev Admin Printing API
 // Register New admin
-app.post('/changes/developer/post/merchant', (req, res) => {
+app.post('/changes/developer/post/merchant/admin', (req, res) => {
     const {
         merchantid,
         username, password, fullname, gender, email, phone, // table user
@@ -647,6 +647,41 @@ app.post('/unchanges/developer/delete/merchant/admin', (req, res) => {
         if (err) {console.log(err); res.send('-2')}
         res.send('1')
     })
+})
+
+// dev edit admin merchant
+app.put('/changes/developer/update/merchant/admin', (req, res) => {
+    const {
+        merchantid, userid,
+        username, fullname, gender, email, phone, // table user
+        position, cardid, // table adminprinting
+    } = req.body
+
+    console.log(req.body);
+    if(username && userid && fullname && gender && email && phone && position && cardid && merchantid) {
+        userSQL = `
+            UPDATE `+`user`+` SET username = '${username}', 
+                fullname = '${fullname}', gender = '${gender}', 
+                email = '${email}', phone = '${phone}' WHERE userid = '${userid}'
+        `
+        adminprintingSQL = `
+            UPDATE adminprinting SET position = '${position}', 
+                cardid = '${cardid}' WHERE adminprinting.userid = '${userid}'
+        `
+        try {
+            db.query(userSQL, (err, fields) => {
+                if(err){console.log(err)}
+                db.query(adminprintingSQL, (err1, fields1) => {
+                    if(err1){console.log(err1)}
+                    res.send('1')
+                })
+            })
+        } catch (error) {
+            res.send('-3')
+        }
+    } else {
+        res.send('-2')
+    }
 })
 
 app.listen(port, () => {
