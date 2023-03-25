@@ -550,25 +550,20 @@ app.post('/unchanges/developer/delete/merchant', (req, res) => {
     const {merchantid, addressid} = req.body
     let query1 = `DELETE ` + `user` +` FROM user INNER JOIN adminprinting ON user.userid = adminprinting.userid WHERE adminprinting.merchantid = ${merchantid}`
     let query2 = `DELETE address FROM address INNER JOIN merchant ON address.addressid = merchant.addressid WHERE merchant.addressid = ${addressid}`
-    let sqlStatus = '1'
-
    
     db.query(query1, (err) => {
-        if (err) {
-            sqlStatus = '-2'
-        }
+        if (err) {console.log(err); res.send('-1')}
+        db.query(query2, (err2) => {
+            if(err2){console.log(err2); res.send('-2')}
+            res.send('1')
+        })
     })
-    db.query(query2, (err) => {
-        if (err) {
-            sqlStatus = '-3'
-        }
-    })
-    res.send(sqlStatus)
+    
 })
 
 
 // update merchant codes
-app.put('/changes/develepor/update/merchant', (req, res) => {
+app.put('/changes/developer/update/merchant', (req, res) => {
     const {
         // Merchant Info
         merchantid, edmerchuname, edmerchname, edmerchdate,
@@ -616,6 +611,44 @@ app.put('/changes/develepor/update/merchant', (req, res) => {
     
     })
 })
+
+// Dev Admin Printing API
+// Register New admin
+app.post('/changes/developer/post/merchant', (req, res) => {
+    const {
+        merchantid,
+        username, password, fullname, gender, email, phone, // table user
+        position, cardid, // table adminprinting
+    } = req.body
+
+    if(username && password && fullname && gender && email && phone && position && cardid && merchantid) {
+        userSQL = `INSERT INTO user (userid, username, password, fullname, gender, email, phone) 
+        VALUES (NULL, '${username}', '${password}', '${fullname}', '${gender}', '${email}', '${phone}') `
+        db.query(userSQL, (err, fields)=>{ // add user
+            if(err){console.log(err)}
+            console.log(fields)
+            adminprintingSQL = `INSERT INTO adminprinting (adminprintingid, position, cardid, merchantid, userid) 
+            VALUES (NULL, '${position}', '${cardid}', '${merchantid}', '${fields.insertId}') `
+            db.query(adminprintingSQL, (err1, fields1) => {
+                if(err1){console.log(err1)}
+                res.send('1')
+            })
+        })
+    } else {
+        res.send('-2')
+    }
+})
+
+// dev delete admin merchant
+app.post('/unchanges/developer/delete/merchant/admin', (req, res) => {
+    const {userid} = req.body
+    let query1 = `DELETE ` + `user` +` FROM user  WHERE userid = ${userid}`
+    db.query(query1, (err) => {
+        if (err) {console.log(err); res.send('-2')}
+        res.send('1')
+    })
+})
+
 app.listen(port, () => {
   console.log(`Example app listening on port ${port}`)
 })
