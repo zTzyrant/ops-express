@@ -329,7 +329,6 @@ app.get('/ops-prod', (req, res) => {
 
 app.get('/ops-prod/:id?', (req, res) => {
     db.query(`SELECT * FROM product INNER JOIN merchant ON merchant.merchantid = product.merchantid WHERE productid = '${req.params.id}'`, (err, result) => {
-        console.log(result.length);
         let tempProduct = []
         result.forEach(element => {
             db.query(`SELECT * FROM producttype WHERE producttype.productid = ${element.productid}`, (err, productType) => {
@@ -682,6 +681,22 @@ app.put('/changes/developer/update/merchant/admin', (req, res) => {
     } else {
         res.send('-2')
     }
+})
+
+app.get('/product/category', (req, res) => {
+    sql = 'SELECT DISTINCT category FROM producttype'
+    db.query(sql, (err, fields) => {
+        if(err)throw err
+        res.send(fields)
+    })
+})
+
+app.get('/product/location', (req, res) => {
+    sql = 'SELECT DISTINCT city FROM merchant INNER JOIN address ON merchant.addressid = address.addressid INNER JOIN product ON merchant.merchantid = product.merchantid'
+    db.query(sql, (err, fields) => {
+        if(err)throw err
+        res.send(fields)
+    })
 })
 
 app.listen(port, () => {
