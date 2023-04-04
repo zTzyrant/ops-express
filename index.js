@@ -302,20 +302,22 @@ app.post('/calcpages', (req, res) => {
 // get all product
 app.get('/ops-prod', (req, res) => {
     db.query(`SELECT * FROM product INNER JOIN merchant ON merchant.merchantid = product.merchantid`, (err, result) => {
-        console.log(result.length);
         let tempProduct = []
         result.forEach(element => {
             db.query(`SELECT * FROM producttype WHERE producttype.productid = ${element.productid}`, (err, productType) => {
                 db.query(`SELECT * FROM printquality WHERE printquality.productid = ${element.productid}`, (err, printQuality) => {
                     db.query(`SELECT * FROM productcolortype WHERE productcolortype.productid = ${element.productid}`, (err, printColors) => {
-                        tempProduct.push({
-                            productOPS: element,
-                            productService: {
-                                productTypeOPS: productType,
-                                printColorsOPS: printColors,
-                                printQualityOPS: printQuality
-                            },
-                        })
+                        if(productType.length !== 0 && printQuality.length !== 0 && printColors.length !== 0){
+                            tempProduct.push({
+                                productOPS: element,
+                                productService: {
+                                    productTypeOPS: productType,
+                                    printColorsOPS: printColors,
+                                    printQualityOPS: printQuality
+                                },
+                            })
+                        }
+                        
                         if(result[result.length - 1] === element){
                             res.status(200).json(tempProduct)
                         }
@@ -351,7 +353,6 @@ app.get('/ops-prod/:id?', (req, res) => {
             
         });
     })
-
 })
 
 // show all merchant
@@ -493,12 +494,12 @@ app.post('/secure/net/login', (req, res) => {
                 var token = jwt.sign({fields}, process.env.LOCKED_SECREAT_JWT);
                 res.send({statusLogin: '1', authLogin: token})
             } else {
-                res.send('-2')
+                res.send({statusLogin: '-2'})
             }
         })
 
     } else {
-        res.send('-1')
+        res.send({statusLogin: '-1'})
     }
 })
 
@@ -511,9 +512,7 @@ app.post('/secure/net/check/dev/auth', (req, res) => {
         let query = `SELECT user.userid, username, fullname, gender, email, phone, devid, position
             FROM user INNER JOIN developer ON user.userid = developer.userid WHERE username = '${decoded.fields[0].username}' AND password = '${decoded.fields[0].password}'`
         db.query(query, (err, fields) => {
-            console.log(fields);
             if(fields){
-                console.log('true user');
                 res.send({statQuo: '1', datax: fields})
             } else {
                 res.send({statQuo: '-2'})
@@ -697,6 +696,269 @@ app.get('/product/location', (req, res) => {
         if(err)throw err
         res.send(fields)
     })
+})
+
+// Dev Get Merchant Product Total
+app.get('/show/merchant/product/total', (req, res) => {
+    query = `SELECT * FROM merchant INNER JOIN address ON merchant.addressid = address.addressid `
+    db.query(query, (err, fields) => {
+        fields = fields.map(row => {
+            // row.datecreated = row.datecreated.toISOString().split('T')[0];
+            row.datecreated = moment(row.datecreated).utc(8).format('YYYY-MM-DD')
+            return row;
+        });
+        query1 = `SELECT COUNT(DISTINCT productid) AS 'total' FROM merchant 
+            LEFT JOIN product ON product.merchantid = merchant.merchantid 
+            GROUP BY merchant.merchantid
+        `
+        db.query(query1, (err1, fields1) => {
+            fields.forEach((xDat, indx) => {
+                fields[indx] = {merchdatas: xDat, prod: fields1[indx]}
+            })
+         res.status(200).json(fields)
+        })
+    })
+})
+
+app.get('/show/merchant/product/detail/:idmerch', (req, res) => {
+    db.query(`SELECT * FROM product INNER JOIN merchant ON merchant.merchantid = product.merchantid WHERE merchant.merchantid = '${req.params.idmerch}'`, (err, result) => {
+        let tempProduct = []
+        result.forEach(element => {
+            db.query(`SELECT * FROM producttype WHERE producttype.productid = ${element.productid}`, (err, productType) => {
+                db.query(`SELECT * FROM printquality WHERE printquality.productid = ${element.productid}`, (err, printQuality) => {
+                    db.query(`SELECT * FROM productcolortype WHERE productcolortype.productid = ${element.productid}`, (err, printColors) => {
+                        tempProduct.push({
+                            productOPS: element,
+                            productService: {
+                                productTypeOPS: productType,
+                                printColorsOPS: printColors,
+                                printQualityOPS: printQuality
+                            },
+                        })
+                        if(result[result.length - 1] === element){
+                            res.status(200).json(tempProduct)
+                        }
+                    });
+                });
+            });          
+        });
+    })
+})
+
+app.get('/show/merchant/product/details/:idprod', (req, res) => {
+    let tempProduct = []
+    db.query(`SELECT * FROM producttype WHERE producttype.productid = ${req.params.idprod}`, (err, productType) => {
+        db.query(`SELECT * FROM printquality WHERE printquality.productid = ${req.params.idprod}`, (err, printQuality) => {
+            db.query(`SELECT * FROM productcolortype WHERE productcolortype.productid = ${req.params.idprod}`, (err, printColors) => {
+                tempProduct.push({
+                    productService: {
+                        productTypeOPS: productType,
+                        printColorsOPS: printColors,
+                        printQualityOPS: printQuality
+                    },
+                })
+                res.status(200).json(tempProduct)
+            });
+        });
+    });          
+})
+
+// developer insert new product
+app.post('/changes/developer/post/merchant/product', (req, res) => {
+    console.log(req.body)
+    const {merchantid, producttitle, productdescription, category} = req.body
+    if(merchantid, producttitle, productdescription, category){
+        query = `INSERT INTO product (productid, producttitle, productdescription, category, merchantid) VALUES 
+        (NULL, '${producttitle}', '${productdescription}', '${category}', '${merchantid}')`
+        db.query(query, (err, fields) => {
+            if(err) throw err
+            if(fields.affectedRows > 0){
+                res.send('1')
+            }
+        })
+    } else {
+        res.send('-2')
+    }
+})
+
+// developer upload image for product type
+app.post('/changes/developer/post/merchant/product/image', (req, res) => {
+    var form = new formidable.IncomingForm();
+    let msg = ''
+    let scode = 0
+    form.parse(req, function (err, fields, files) {
+    let typefile = files.anyfilesnames.mimetype
+    let formatedType = typefile.split("/", 2);
+
+        let oldpath = files.anyfilesnames.filepath;
+        let filename = files.anyfilesnames.newFilename + Date.now() + `.${formatedType[1]}`
+        let newpath = __dirname + "/upload/merchant/images/product/" + filename;
+        let fullUrl = req.protocol + '://' + req.get('host');
+        let retPath = fullUrl + "/upload/merchant/images/product/" + filename;
+        mv(oldpath, newpath, function (err) {
+            if (err) { 
+                msg = err
+                scode = 406
+                throw err
+            } else {
+                msg = 'file uploaded successfully'
+                scode = 202
+            }
+
+            res.status(200).json({
+                resUpload: {
+                    statusCode: scode,
+                    filePath: retPath,
+                    message: msg
+                }
+            })
+        });
+    });
+});
+
+// developer inser new product type
+app.post('/changes/developer/post/merchant/product/types', (req, res) => {
+    console.log(req.body);
+    const {productid, category, producttitle, quantity, paperprice, imageProduct} = req.body
+    if(productid && category, producttitle, quantity, paperprice, imageProduct){
+        sql = `INSERT INTO producttype (productypeid, productid, category, papertype, quantity, paperprice, imageurl) VALUES 
+            (NULL, '9', '${category}', '${producttitle}', '${quantity}', '${paperprice}', '${imageProduct}')`     
+        try {
+            db.query(sql, (err, fields) => {
+                if(err) throw err
+                if(fields.affectedRows > 0){
+                    res.send('1')
+                }
+            })
+        } catch (error) {
+            res.send('-1')
+        }
+    } else {
+        res.send('-2')
+    }
+    
+})
+
+// developer inser new product color
+app.post('/changes/developer/post/merchant/product/color', (req, res) => {
+    const {colortype, colorfee, productid} = req.body
+    if(colortype, colorfee, productid){
+        sql = `INSERT INTO productcolortype (colortypeid, colortype, colorfee, productid) 
+            VALUES (NULL, '${colortype}', '${colorfee}', '${productid}')`
+        try {
+            db.query(sql, (err, fields) => {
+                if(err) throw err
+                if(fields.affectedRows > 0){
+                    res.send('1')
+                }
+            })
+        } catch (error) {
+            res.send('-1')
+        }
+    } else {
+        res.send('-2')
+    }
+})
+
+// developer inser new product quality
+app.post('/changes/developer/post/merchant/product/quality', (req, res) => {
+    const {printquality, printqualityfee, productid} = req.body
+    if(printquality, printqualityfee, productid){
+        sql = `INSERT INTO printquality (printqualityid, printquality, printqualityfee, productid) 
+            VALUES (NULL, '${printquality}', '${printqualityfee}', '${productid}')`
+        try {
+            db.query(sql, (err, fields) => {
+                if(err) throw err
+                if(fields.affectedRows > 0){
+                    res.send('1')
+                }
+            })
+        } catch (error) {
+            res.send('-1')
+        }
+    } else {
+        res.send('-2')
+    }
+})
+
+// Developer Delete Product
+app.delete('/unchanges/developer/post/merchant/product/:id', (req, res) => {
+    const productId = req.params.id
+    if(productId){
+        sql = `DELETE FROM product WHERE product.productid = '${productId}'`
+        try {
+            db.query(sql, (err, fields) => {
+                if(err) throw err
+                if(fields.affectedRows > 0){
+                    res.send('1')
+                }
+            })
+        } catch (error) {
+            res.send('-1')
+        }
+    } else {
+        res.send('-2')
+    }
+})
+
+// Developer Delete Product Type
+app.delete('/unchanges/developer/post/merchant/product/type/:id', (req, res) => {
+    const productypeid = req.params.id
+    if(productypeid){
+        sql = `DELETE FROM producttype WHERE producttype.productypeid = '${productypeid}'`
+        try {
+            db.query(sql, (err, fields) => {
+                if(err) throw err
+                if(fields.affectedRows > 0){
+                    res.send('1')
+                }
+            })
+        } catch (error) {
+            res.send('-1')
+        }
+    } else {
+        res.send('-2')
+    }
+})
+
+// Developer Delete Print Color
+app.delete('/unchanges/developer/post/merchant/product/print/color/:id', (req, res) => {
+    const colortypeid = req.params.id
+    if(colortypeid){
+        sql = `DELETE FROM productcolortype WHERE productcolortype.colortypeid = '${colortypeid}'`
+        try {
+            db.query(sql, (err, fields) => {
+                if(err) throw err
+                if(fields.affectedRows > 0){
+                    res.send('1')
+                }
+            })
+        } catch (error) {
+            res.send('-1')
+        }
+    } else {
+        res.send('-2')
+    }
+})
+
+// Developer Delete Print Quality
+app.delete('/unchanges/developer/post/merchant/product/print/quality/:id', (req, res) => {
+    const printqualityid = req.params.id
+    if(printqualityid){
+        sql = `DELETE FROM printquality WHERE printquality.printqualityid = '${printqualityid}'`
+        try {
+            db.query(sql, (err, fields) => {
+                if(err) throw err
+                if(fields.affectedRows > 0){
+                    res.send('1')
+                }
+            })
+        } catch (error) {
+            res.send('-1')
+        }
+    } else {
+        res.send('-2')
+    }
 })
 
 app.listen(port, () => {
