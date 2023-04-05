@@ -767,7 +767,7 @@ app.get('/show/merchant/product/details/:idprod', (req, res) => {
 app.post('/changes/developer/post/merchant/product', (req, res) => {
     console.log(req.body)
     const {merchantid, producttitle, productdescription, category} = req.body
-    if(merchantid, producttitle, productdescription, category){
+    if(merchantid && producttitle && productdescription && category){
         query = `INSERT INTO product (productid, producttitle, productdescription, category, merchantid) VALUES 
         (NULL, '${producttitle}', '${productdescription}', '${category}', '${merchantid}')`
         db.query(query, (err, fields) => {
@@ -816,13 +816,13 @@ app.post('/changes/developer/post/merchant/product/image', (req, res) => {
     });
 });
 
-// developer inser new product type
+// developer insert new product type
 app.post('/changes/developer/post/merchant/product/types', (req, res) => {
     console.log(req.body);
     const {productid, category, producttitle, quantity, paperprice, imageProduct} = req.body
-    if(productid && category, producttitle, quantity, paperprice, imageProduct){
+    if(productid && category && producttitle && quantity && paperprice && imageProduct){
         sql = `INSERT INTO producttype (productypeid, productid, category, papertype, quantity, paperprice, imageurl) VALUES 
-            (NULL, '9', '${category}', '${producttitle}', '${quantity}', '${paperprice}', '${imageProduct}')`     
+            (NULL, '${productid}', '${category}', '${producttitle}', '${quantity}', '${paperprice}', '${imageProduct}')`     
         try {
             db.query(sql, (err, fields) => {
                 if(err) throw err
@@ -839,10 +839,10 @@ app.post('/changes/developer/post/merchant/product/types', (req, res) => {
     
 })
 
-// developer inser new product color
+// developer insert new product color
 app.post('/changes/developer/post/merchant/product/color', (req, res) => {
     const {colortype, colorfee, productid} = req.body
-    if(colortype, colorfee, productid){
+    if(colortype && colorfee && productid){
         sql = `INSERT INTO productcolortype (colortypeid, colortype, colorfee, productid) 
             VALUES (NULL, '${colortype}', '${colorfee}', '${productid}')`
         try {
@@ -860,10 +860,10 @@ app.post('/changes/developer/post/merchant/product/color', (req, res) => {
     }
 })
 
-// developer inser new product quality
+// developer insert new product quality
 app.post('/changes/developer/post/merchant/product/quality', (req, res) => {
     const {printquality, printqualityfee, productid} = req.body
-    if(printquality, printqualityfee, productid){
+    if(printquality && printqualityfee && productid){
         sql = `INSERT INTO printquality (printqualityid, printquality, printqualityfee, productid) 
             VALUES (NULL, '${printquality}', '${printqualityfee}', '${productid}')`
         try {
@@ -958,6 +958,121 @@ app.delete('/unchanges/developer/post/merchant/product/print/quality/:id', (req,
         }
     } else {
         res.send('-2')
+    }
+})
+
+// Developer Update Product
+app.post('/changes/developer/update/merchant/product', (req, res) => {
+    const {productid, producttitle, productdescription, category} = req.body
+    
+    if(productid && producttitle && productdescription && category){
+        sql = `UPDATE product SET producttitle = '${producttitle}', 
+            productdescription = '${productdescription}', 
+            category = '${category}' WHERE product.productid = '${productid}'
+        `
+        try {
+            db.query(sql, (err, fields) => {
+                if(err) throw err
+                if(fields.affectedRows > 0){
+                    res.send('1')
+                }
+            })
+        } catch (error) {
+            res.send('-1')
+        }
+    } else {
+        res.send('-2')
+    }
+})
+
+// Developer Update Product Type
+app.post('/changes/developer/update/merchant/product/type', (req, res) => {
+    console.log(req.body);
+    const { productypeid, producttitle, category, imageurl, quantity, paperprice} = req.body
+    let sql = ''
+    if(productypeid && producttitle && category && quantity && paperprice){
+        if(imageurl){
+            sql = `UPDATE producttype SET category = '${category}', 
+                papertype = '${producttitle}', quantity = '${quantity}', 
+                paperprice = '${paperprice}', imageurl = '${imageurl}' 
+                WHERE producttype.productypeid = ${productypeid}
+            `
+            try {
+                db.query(sql, (err, fields) => {
+                    if(err) throw err
+                    if(fields.affectedRows > 0){
+                        res.send('1')
+                    }
+                })
+            } catch (error) {
+                res.send('-1')
+            }
+        } else {
+            sql = `UPDATE producttype SET category = '${category}', 
+                papertype = '${producttitle}', quantity = '${quantity}', 
+                paperprice = '${paperprice}' WHERE producttype.productypeid = ${productypeid}
+            `
+            try {
+                db.query(sql, (err, fields) => {
+                    if(err) throw err
+                    if(fields.affectedRows > 0){
+                        res.send('1')
+                    }
+                })
+            } catch (error) {
+                res.send('-1')
+            }
+        }
+    } else {
+        res.send('-2')
+    }
+})
+
+// Developer Update Print Color
+app.post('/changes/developer/update/merchant/product/print/color', (req, res) => {
+    console.log(req.body);
+    const {colortypeid, colortype, colorfee} = req.body
+    if(colortypeid && colortype && colorfee){
+        sql = `UPDATE productcolortype SET colortype = '${colortype}', 
+            colorfee = '${colorfee}' WHERE productcolortype.colortypeid = '${colortypeid}'
+        `
+        try {
+            db.query(sql, (err, fields) => {
+                if(err) throw err
+                if(fields.affectedRows > 0){
+                    res.send('1')
+                }
+            })
+        } catch (error) {
+            res.send('-1')
+        }
+    } else {
+        res.send('-3')
+    }
+})
+
+// Developer Update Print Quality
+app.post('/changes/developer/update/merchant/product/print/quality', (req, res) => {
+    const {printqualityid, printquality, printqualityfee} = req.body
+    console.log(req.body);
+    if(printqualityid && printquality && printqualityfee){
+        sql = `UPDATE printquality SET printquality = '${printquality}', 
+            printqualityfee = '${printqualityfee}' WHERE printquality.printqualityid = ${printqualityid}
+        `
+        try {
+            db.query(sql, (err, fields) => {
+                if(err){
+                    res.send('-4')
+                }
+                if(fields.affectedRows > 0){
+                    res.send('1')
+                }
+            })
+        } catch (error) {
+            res.send('-1')
+        }
+    } else {
+        res.send('-3')
     }
 })
 
