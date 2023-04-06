@@ -329,6 +329,88 @@ app.get('/ops-prod', (req, res) => {
     })
 })
 
+// get all product by location
+app.get('/ops-prod/city/:from', (req, res) => {
+    const city = req.params.from
+    console.log(req.params);
+    let adSql = `SELECT * FROM product INNER JOIN merchant ON merchant.merchantid = product.merchantid INNER JOIN address 
+        ON merchant.addressid = address.addressid
+    `
+    if(city !== '-1'){
+        adSql = `SELECT * FROM product INNER JOIN merchant ON merchant.merchantid = product.merchantid INNER JOIN address 
+        ON merchant.addressid = address.addressid WHERE address.city = '${city}'
+    `
+    }
+
+    db.query(adSql, (err, result) => {
+        let tempProduct = []
+        result.forEach(element => {
+            db.query(`SELECT * FROM producttype WHERE producttype.productid = ${element.productid}`, (err, productType) => {
+                db.query(`SELECT * FROM printquality WHERE printquality.productid = ${element.productid}`, (err, printQuality) => {
+                    db.query(`SELECT * FROM productcolortype WHERE productcolortype.productid = ${element.productid}`, (err, printColors) => {
+                        if(productType.length !== 0 && printQuality.length !== 0 && printColors.length !== 0){
+                            tempProduct.push({
+                                productOPS: element,
+                                productService: {
+                                    productTypeOPS: productType,
+                                    printColorsOPS: printColors,
+                                    printQualityOPS: printQuality
+                                },
+                            })
+                        }
+                        
+                        if(result[result.length - 1] === element){
+                            res.status(200).json(tempProduct)
+                        }
+                    });
+                });
+            });
+            
+        });
+    })
+})
+
+// get all product by category
+app.get('/ops-prod/category/:from', (req, res) => {
+    const category = req.params.from
+    console.log(req.params);
+    let adSql = `SELECT * FROM product INNER JOIN merchant ON merchant.merchantid = product.merchantid INNER JOIN address 
+        ON merchant.addressid = address.addressid
+    `
+    let catSql = ''
+
+    if(category !== '-1'){
+        catSql = `AND producttype.category = '${category}'`
+    }
+    db.query(adSql, (err, result) => {
+        let tempProduct = []
+        result.forEach(element => {
+            db.query(`SELECT * FROM producttype WHERE producttype.productid = ${element.productid} ${catSql}`, (err, productType) => {
+                db.query(`SELECT * FROM printquality WHERE printquality.productid = ${element.productid}`, (err, printQuality) => {
+                    db.query(`SELECT * FROM productcolortype WHERE productcolortype.productid = ${element.productid}`, (err, printColors) => {
+                        if(productType.length !== 0 && printQuality.length !== 0 && printColors.length !== 0){
+                            tempProduct.push({
+                                productOPS: element,
+                                productService: {
+                                    productTypeOPS: productType,
+                                    printColorsOPS: printColors,
+                                    printQualityOPS: printQuality
+                                },
+                            })
+                        
+                        }
+                        
+                        if(result[result.length - 1] === element){
+                            res.status(200).json(tempProduct)
+                        }
+                    });
+                });
+            });
+            
+        });
+    })
+})
+
 app.get('/ops-prod/:id?', (req, res) => {
     db.query(`SELECT * FROM product INNER JOIN merchant ON merchant.merchantid = product.merchantid WHERE productid = '${req.params.id}'`, (err, result) => {
         let tempProduct = []
