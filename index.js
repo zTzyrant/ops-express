@@ -10,6 +10,7 @@ const responseRegister = require('./response/responseregist')
 const CryptoJS = require('crypto-js')
 const sendEmailOps = require('./mails/sendemail')
 const resetpasswordSender = require('./mails/sendemailrestartpass')
+const midtransClient = require('midtrans-client');
 
 const formidable = require('formidable')
 const mv = require('mv');
@@ -27,10 +28,25 @@ app.use(cors({
     credentials: true
 }));
 
+
+
 app.use(bodyparser.json())
 var publicDir = require('path').join(__dirname,'upload'); 
 app.use('/upload',express.static(publicDir)); 
 // routes / URL / endpoint
+
+// Create Core API instance
+let coreApi = new midtransClient.CoreApi({
+    isProduction : false,
+    serverKey : 'SB-Mid-server-YYKCkzbzFPs6OVWaOK6l5u-c',
+    clientKey : 'SB-Mid-client-NNpoSwDqFwSM9IBG'
+});
+
+let snap = new midtransClient.Snap({
+    isProduction : false,
+    serverKey : 'SB-Mid-server-YYKCkzbzFPs6OVWaOK6l5u-c',
+    clientKey : 'SB-Mid-client-NNpoSwDqFwSM9IBG'
+});
 
 app.get('/', (req, res) => {
     res.send("Why u here?")
@@ -257,7 +273,8 @@ app.post('/uploadorderpdf', (req, res) => {
         let oldpath = files.anyfilesnames.filepath;
         let filename = files.anyfilesnames.newFilename + Date.now() + '.pdf'
         let newpath = __dirname + "/upload/order/document/" + filename;
-        let retPath = "/upload/order/document/" + filename;
+        let fullUrl = req.protocol + '://' + req.get('host');
+        let retPath = fullUrl + "/upload/order/document/" + filename;
         mv(oldpath, newpath, function (err) {
             if (err) { 
                 msg = err
@@ -572,7 +589,7 @@ app.post('/secure/net/login', (req, res) => {
         let query = `SELECT * FROM user INNER JOIN developer ON user.userid = developer.userid WHERE username = '${username}' AND password = '${password}'`
         db.query(query, (err, fields) => {
             console.log(fields);
-            if(fields){
+            if(fields.length > 0){
                 var token = jwt.sign({fields}, process.env.LOCKED_SECREAT_JWT);
                 res.send({statusLogin: '1', authLogin: token})
             } else {
@@ -1158,6 +1175,97 @@ app.post('/changes/developer/update/merchant/product/print/quality', (req, res) 
     }
 })
 
+// Admin Printing / Merchant Login Here
+app.post('/secure/merchant/login', (req, res) => {
+    const {username, password} = req.body
+    console.log(req.body);
+    if(username && password){
+        let query = `SELECT * FROM user INNER JOIN adminprinting ON user.userid = adminprinting.userid WHERE username = '${username}' AND password = '${password}'`
+        db.query(query, (err, fields) => {
+            if(fields.length > 0){
+                var token = jwt.sign({fields}, process.env.LOCKED_SECREAT_JWT);
+                res.send({statusLogin: '1', authLogin: token})
+            } else {
+                res.send({statusLogin: '-2'})
+            }
+        })
+
+    } else {
+        res.send({statusLogin: '-1'})
+    }
+})
+
+// Admin Printing / Merchant check login auth
+app.post('/secure/merchant/check/auth', (req, res) => {
+    let AUTH = req.body.authmerch
+    console.log(AUTH);
+
+    try {
+        var decoded = jwt.verify(AUTH, process.env.LOCKED_SECREAT_JWT);
+        console.log(decoded)
+        console.log(decoded.fields);
+        let query = `SELECT user.userid, username, fullname, gender, email, phone, adminprintingid, adminprintingid, position, merchantid
+            FROM user INNER JOIN adminprinting ON user.userid = adminprinting.userid WHERE username = '${decoded.fields[0].username}' AND password = '${decoded.fields[0].password}'`
+        db.query(query, (err, fields) => {
+            if(fields){
+                res.send({statQuo: '1', datax: fields})
+            } else {
+                res.send({statQuo: '-2'})
+            }
+        })
+    } catch(err) {
+        console.log(err);
+        console.log('Error Session Developer From Outside');
+        res.send('-1')
+    } 
+})
+
+// SANBOX PAYMENT
+// =============UNDER CONSTRUCTION-------------- //
+// app.post('/secure/consumer/payment', (req, res) => {
+
+//     snap.createTransaction(req.body)
+//     .then((transaction)=>{
+//         // transaction token
+//         let transactionToken = transaction.token;
+//         console.log('transactionToken:',transactionToken);
+
+//         // transaction redirect url
+//         let transactionRedirectUrl = transaction.redirect_url;
+//         console.log('transactionRedirectUrl:',transactionRedirectUrl);
+//         res.json({
+//             status: true,
+//             msg: 'Success',
+//             data: transactionRedirectUrl
+//         })
+//     })
+//     .catch((e)=>{
+//         console.log('Error occured:',e.message);
+//         res.json({
+//             status: false,
+//             msg: e.message
+//         })
+//     });
+
+//     // coreApi.charge(req.body).then((chargeResponse)=>{
+//     //     let orderData = {
+//     //         id: chargeResponse.order_id,
+//     //         response_midtrans: JSON.stringify(chargeResponse)
+//     //     }
+//     //     res.json({
+//     //         status: true,
+//     //         msg: 'Success',
+//     //         data: chargeResponse
+//     //     })
+//     // }).catch((e)=>{
+//     //     console.log('Error occured:',e.message);
+//     //     res.json({
+//     //         status: false,
+//     //         msg: e.message
+//     //     })
+//     // });
+// })
+// SANBOX PAYMENT
 app.listen(port, () => {
   console.log(`Example app listening on port ${port}`)
 })
