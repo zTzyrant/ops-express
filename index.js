@@ -495,7 +495,7 @@ app.post('/registermerchant', (req, res) => {
         db.query(addressSQL, (err1, fields1)=>{ // add address
             if(err1) throw err1
             merchantSQL = `INSERT INTO merchant (merchantid, merchantuname, merchantname, datecreated, opentime, closetime, merchantlogo, ownerid, addressid) 
-            VALUES (NULL, '${merchantuname}', '${merchantname}', '${datenow}', '${opentime}', '${closetime}', '${merchantlogo}', '', '${fields1.insertId}') `
+            VALUES (NULL, '${merchantuname}', '${merchantname}', '${datenow}', '${opentime}', '${closetime}', '${merchantlogo}', '-1', '${fields1.insertId}') `
             db.query(merchantSQL, (err2, fields2)=>{ // add merchant
                 if(err2) throw err2
                 userSQL = `INSERT INTO user (userid, username, password, fullname, gender, email, phone) 
@@ -1218,6 +1218,86 @@ app.post('/secure/merchant/check/auth', (req, res) => {
         console.log('Error Session Developer From Outside');
         res.send('-1')
     } 
+})
+
+app.post('/save/order/to/cart', (req, res) => {
+    const {
+        copies, pages, totalquantity, totalcost, color, quality, 
+        papertype, inputedfile, orderNote, productid, consumerid
+    } = req.body
+    try {
+        let query = `
+            INSERT INTO orderdata (orderid, numofcopies, pages, totalquantity, 
+                totalcost, colortype, printingquality, productype, fileprintingurl, ordernote, 
+                orderStatus, transactionid, productid, consumerid) 
+            VALUES 
+            (NULL, '${copies}', '${pages}', '${totalquantity}', 
+            '${totalcost}', '${color}', '${quality}', '${papertype}', '${inputedfile}', 
+            '${orderNote}', 'Pending', '-1', '${productid}', '${consumerid}') 
+        `
+        db.query(query, (err, fields) => {
+            console.log(fields);
+            if(fields){
+                res.send('1')
+            } else {
+                res.send('-1')
+            }
+        })
+    } catch(err) {
+        console.log(err);
+        res.send('-2')
+    } 
+})
+
+app.post('/delete/order/from/cart', (req, res) => {
+    const { orderid } = req.body
+    let query = `DELETE FROM orderdata WHERE orderid = '${orderid}}'`
+    try{
+        db.query(query, (err, fields) => {
+            res.send('1')
+        })
+    } catch (err) {
+        console.log(err);
+        res.send('-2')
+    }
+})
+
+app.get('/customer/view/cart/:id', (req, res) => {
+    const id = req.params.id
+    try{
+        let query = `
+        SELECT * FROM orderdata INNER JOIN product ON product.productid = orderdata.productid INNER JOIN producttype ON orderdata.productid = producttype.productid INNER JOIN productcolortype ON orderdata.productid = productcolortype.productid INNER JOIN printquality ON orderdata.productid = printquality.productid INNER JOIN merchant ON product.merchantid = merchant.merchantid WHERE orderdata.productype = producttype.papertype AND orderdata.colortype = productcolortype.colortype AND orderdata.orderStatus = 'Pending' AND orderdata.printingquality = printquality.printquality AND orderdata.consumerid = '${id}'
+        `
+        db.query(query, (err, fields) => {
+            if(fields){
+                fields = fields.map(row => {
+                    // row.datecreated = row.datecreated.toISOString().split('T')[0];
+                    row.datecreated = moment(row.datecreated).utc(8).format('YYYY-MM-DD')
+                    return row;
+                });
+                res.send({status: '1', fields})
+            } else {
+                res.send({status: '-1'})
+            }
+        })
+    } catch (err) {
+        console.log(err);
+        res.send('-2')
+    }
+})
+
+app.get('/testsql', (req, res) => {
+    let query = `
+    SELECT * FROM orderdata INNER JOIN product ON product.productid = orderdata.productid INNER JOIN producttype ON orderdata.productid = producttype.productid INNER JOIN productcolortype ON orderdata.productid = productcolortype.productid INNER JOIN printquality ON orderdata.productid = printquality.productid INNER JOIN merchant ON product.merchantid = merchant.merchantid WHERE orderdata.productype = producttype.papertype AND orderdata.colortype = productcolortype.colortype AND orderdata.orderStatus = 'Pending' AND orderdata.printingquality = printquality.printquality
+    `
+    db.query(query, (err, fields) => {
+        fields = fields.map(row => {
+            // row.datecreated = row.datecreated.toISOString().split('T')[0];
+            row.datecreated = moment(row.datecreated).utc(8).format('YYYY-MM-DD')
+            return row;
+        });
+        res.send(fields)
+    })
 })
 
 // SANBOX PAYMENT
