@@ -918,10 +918,10 @@ app.post('/changes/developer/post/merchant/product/image', (req, res) => {
 // developer insert new product type
 app.post('/changes/developer/post/merchant/product/types', (req, res) => {
     console.log(req.body);
-    const {productid, category, producttitle, quantity, paperprice, imageProduct} = req.body
-    if(productid && category && producttitle && quantity && paperprice && imageProduct){
-        sql = `INSERT INTO producttype (productypeid, productid, category, papertype, quantity, paperprice, imageurl) VALUES 
-            (NULL, '${productid}', '${category}', '${producttitle}', '${quantity}', '${paperprice}', '${imageProduct}')`     
+    const {productid, category, producttitle, weight, quantity, paperprice, imageProduct} = req.body
+    if(productid && category && producttitle && weight && quantity && paperprice && imageProduct){
+        sql = `INSERT INTO producttype (productypeid, productid, category, papertype, weight, quantity, paperprice, imageurl) VALUES 
+            (NULL, '${productid}', '${category}', '${producttitle}', '${weight}', '${quantity}', '${paperprice}', '${imageProduct}')`     
         try {
             db.query(sql, (err, fields) => {
                 if(err) throw err
@@ -941,7 +941,7 @@ app.post('/changes/developer/post/merchant/product/types', (req, res) => {
 // developer insert new product color
 app.post('/changes/developer/post/merchant/product/color', (req, res) => {
     const {colortype, colorfee, productid} = req.body
-    if(colortype && colorfee && productid){
+    if(colortype && colorfee >= 0 && productid){
         sql = `INSERT INTO productcolortype (colortypeid, colortype, colorfee, productid) 
             VALUES (NULL, '${colortype}', '${colorfee}', '${productid}')`
         try {
@@ -962,7 +962,8 @@ app.post('/changes/developer/post/merchant/product/color', (req, res) => {
 // developer insert new product quality
 app.post('/changes/developer/post/merchant/product/quality', (req, res) => {
     const {printquality, printqualityfee, productid} = req.body
-    if(printquality && printqualityfee && productid){
+    console.log(req.body);
+    if(printquality && printqualityfee >= 0 && productid){
         sql = `INSERT INTO printquality (printqualityid, printquality, printqualityfee, productid) 
             VALUES (NULL, '${printquality}', '${printqualityfee}', '${productid}')`
         try {
@@ -1087,9 +1088,10 @@ app.post('/changes/developer/update/merchant/product', (req, res) => {
 // Developer Update Product Type
 app.post('/changes/developer/update/merchant/product/type', (req, res) => {
     console.log(req.body);
-    const { productypeid, producttitle, category, imageurl, quantity, paperprice} = req.body
+    const { productypeid, producttitle, category, imageurl, weight, quantity, paperprice} = req.body
+    
     let sql = ''
-    if(productypeid && producttitle && category && quantity && paperprice){
+    if(productypeid && producttitle && category && weight && quantity && paperprice){
         if(imageurl){
             sql = `UPDATE producttype SET category = '${category}', 
                 papertype = '${producttitle}', quantity = '${quantity}', 
@@ -1108,7 +1110,7 @@ app.post('/changes/developer/update/merchant/product/type', (req, res) => {
             }
         } else {
             sql = `UPDATE producttype SET category = '${category}', 
-                papertype = '${producttitle}', quantity = '${quantity}', 
+                papertype = '${producttitle}',weight = '${weight}', quantity = '${quantity}', 
                 paperprice = '${paperprice}' WHERE producttype.productypeid = ${productypeid}
             `
             try {
@@ -1131,7 +1133,7 @@ app.post('/changes/developer/update/merchant/product/type', (req, res) => {
 app.post('/changes/developer/update/merchant/product/print/color', (req, res) => {
     console.log(req.body);
     const {colortypeid, colortype, colorfee} = req.body
-    if(colortypeid && colortype && colorfee){
+    if(colortypeid && colortype && colorfee >= 0){
         sql = `UPDATE productcolortype SET colortype = '${colortype}', 
             colorfee = '${colorfee}' WHERE productcolortype.colortypeid = '${colortypeid}'
         `
@@ -1154,7 +1156,7 @@ app.post('/changes/developer/update/merchant/product/print/color', (req, res) =>
 app.post('/changes/developer/update/merchant/product/print/quality', (req, res) => {
     const {printqualityid, printquality, printqualityfee} = req.body
     console.log(req.body);
-    if(printqualityid && printquality && printqualityfee){
+    if(printqualityid && printquality && printqualityfee >= 0){
         sql = `UPDATE printquality SET printquality = '${printquality}', 
             printqualityfee = '${printqualityfee}' WHERE printquality.printqualityid = ${printqualityid}
         `
@@ -1266,7 +1268,7 @@ app.get('/customer/view/cart/:id', (req, res) => {
     const id = req.params.id
     try{
         let query = `
-        SELECT * FROM orderdata INNER JOIN product ON product.productid = orderdata.productid INNER JOIN producttype ON orderdata.productid = producttype.productid INNER JOIN productcolortype ON orderdata.productid = productcolortype.productid INNER JOIN printquality ON orderdata.productid = printquality.productid INNER JOIN merchant ON product.merchantid = merchant.merchantid WHERE orderdata.productype = producttype.papertype AND orderdata.colortype = productcolortype.colortype AND orderdata.orderStatus = 'Pending' AND orderdata.printingquality = printquality.printquality AND orderdata.consumerid = '${id}'
+        SELECT * FROM orderdata INNER JOIN product ON product.productid = orderdata.productid INNER JOIN producttype ON orderdata.productid = producttype.productid INNER JOIN productcolortype ON orderdata.productid = productcolortype.productid INNER JOIN printquality ON orderdata.productid = printquality.productid INNER JOIN merchant ON product.merchantid = merchant.merchantid INNER JOIN address ON merchant.addressid = address.addressid WHERE orderdata.productype = producttype.papertype AND orderdata.colortype = productcolortype.colortype AND orderdata.orderStatus = 'Pending' AND orderdata.printingquality = printquality.printquality AND orderdata.consumerid = '${id}'
         `
         db.query(query, (err, fields) => {
             if(fields){
@@ -1288,7 +1290,7 @@ app.get('/customer/view/cart/:id', (req, res) => {
 
 app.get('/testsql', (req, res) => {
     let query = `
-    SELECT * FROM orderdata INNER JOIN product ON product.productid = orderdata.productid INNER JOIN producttype ON orderdata.productid = producttype.productid INNER JOIN productcolortype ON orderdata.productid = productcolortype.productid INNER JOIN printquality ON orderdata.productid = printquality.productid INNER JOIN merchant ON product.merchantid = merchant.merchantid WHERE orderdata.productype = producttype.papertype AND orderdata.colortype = productcolortype.colortype AND orderdata.orderStatus = 'Pending' AND orderdata.printingquality = printquality.printquality
+    SELECT * FROM orderdata INNER JOIN product ON product.productid = orderdata.productid INNER JOIN producttype ON orderdata.productid = producttype.productid INNER JOIN productcolortype ON orderdata.productid = productcolortype.productid INNER JOIN printquality ON orderdata.productid = printquality.productid INNER JOIN merchant ON product.merchantid = merchant.merchantid INNER JOIN address ON merchant.addressid = address.addressid WHERE orderdata.productype = producttype.papertype AND orderdata.colortype = productcolortype.colortype AND orderdata.orderStatus = 'Pending' AND orderdata.printingquality = printquality.printquality
     `
     db.query(query, (err, fields) => {
         fields = fields.map(row => {
@@ -1300,51 +1302,94 @@ app.get('/testsql', (req, res) => {
     })
 })
 
+app.post('/customer/insert/address', (req, res) => {
+    const {userid, fulladdress, city, postcode, phoneaddress, note} = req.body
+    let addressQuery = `INSERT INTO address (addressid, fulladdress, city, postcode, phoneAddress, note) VALUES 
+        (NULL, '${fulladdress}', '${city}', '${postcode}', '${phoneaddress}', '${note}')`
+    if(userid, fulladdress, city, postcode, phoneaddress, note){
+        try{
+            db.query(addressQuery, (err, fields) => {
+                if(fields){
+                    let collectionAdressQuery = `INSERT INTO collectionaddress (idcollectionadd, addressid, userid) VALUES (NULL, '${fields.insertId}', '${userid}')`
+                    db.query(collectionAdressQuery, (err1, fields2) => {
+                        if(fields2){
+                            res.send('1')
+                        } else {
+                            res.send('-3')
+                        }
+                    })
+                } else {
+                    res.send('-2')
+                }
+            })
+        } catch (err){
+            res.send('-1')
+        }
+    } else {
+        res.send('-4')
+    }
+})
+
+app.get('/customer/view/address/:id', (req, res) => {
+    let id = req.params.id
+    let query = `SELECT * FROM collectionaddress INNER JOIN address ON collectionaddress.addressid = address.addressid WHERE collectionaddress.userid = '${id}'`
+    try{
+        db.query(query, (err, fields) => {
+            if(fields){
+                res.send({statQuo: 1, fields: fields})
+            } else {
+                res.send({statQuo: -2})
+            }
+        })
+    } catch (err) {
+        res.send({statQuo: -1})
+    }
+})
 // SANBOX PAYMENT
 // =============UNDER CONSTRUCTION-------------- //
-// app.post('/secure/consumer/payment', (req, res) => {
+app.post('/secure/consumer/payment', (req, res) => {
 
-//     snap.createTransaction(req.body)
-//     .then((transaction)=>{
-//         // transaction token
-//         let transactionToken = transaction.token;
-//         console.log('transactionToken:',transactionToken);
+    // snap.createTransaction(req.body)
+    // .then((transaction)=>{
+    //     // transaction token
+    //     let transactionToken = transaction.token;
+    //     console.log('transactionToken:',transactionToken);
 
-//         // transaction redirect url
-//         let transactionRedirectUrl = transaction.redirect_url;
-//         console.log('transactionRedirectUrl:',transactionRedirectUrl);
-//         res.json({
-//             status: true,
-//             msg: 'Success',
-//             data: transactionRedirectUrl
-//         })
-//     })
-//     .catch((e)=>{
-//         console.log('Error occured:',e.message);
-//         res.json({
-//             status: false,
-//             msg: e.message
-//         })
-//     });
+    //     // transaction redirect url
+    //     let transactionRedirectUrl = transaction.redirect_url;
+    //     console.log('transactionRedirectUrl:',transactionRedirectUrl);
+    //     res.json({
+    //         status: true,
+    //         msg: 'Success',
+    //         data: transactionRedirectUrl
+    //     })
+    // })
+    // .catch((e)=>{
+    //     console.log('Error occured:',e.message);
+    //     res.json({
+    //         status: false,
+    //         msg: e.message
+    //     })
+    // });
 
-//     // coreApi.charge(req.body).then((chargeResponse)=>{
-//     //     let orderData = {
-//     //         id: chargeResponse.order_id,
-//     //         response_midtrans: JSON.stringify(chargeResponse)
-//     //     }
-//     //     res.json({
-//     //         status: true,
-//     //         msg: 'Success',
-//     //         data: chargeResponse
-//     //     })
-//     // }).catch((e)=>{
-//     //     console.log('Error occured:',e.message);
-//     //     res.json({
-//     //         status: false,
-//     //         msg: e.message
-//     //     })
-//     // });
-// })
+    coreApi.charge(req.body).then((chargeResponse)=>{
+        let orderData = {
+            id: chargeResponse.order_id,
+            response_midtrans: JSON.stringify(chargeResponse)
+        }
+        res.json({
+            status: true,
+            msg: 'Success',
+            data: chargeResponse
+        })
+    }).catch((e)=>{
+        console.log('Error occured:',e.message);
+        res.json({
+            status: false,
+            msg: e.message
+        })
+    });
+})
 // SANBOX PAYMENT
 app.listen(port, () => {
   console.log(`Example app listening on port ${port}`)
