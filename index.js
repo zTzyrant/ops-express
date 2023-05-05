@@ -29,6 +29,7 @@ app.use(cors({
 }));
 
 
+var request = require("request");
 
 app.use(bodyparser.json())
 var publicDir = require('path').join(__dirname,'upload'); 
@@ -1390,7 +1391,78 @@ app.post('/secure/consumer/payment', (req, res) => {
         })
     });
 })
+
+var colJson = require('./rajaOngkirCity.json')
+
+app.get('/shipping/cost', (req, res) => {
+    const {origin_city, destination_city, weight} = req.query
+    console.log(origin_city, destination_city);
+
+    let origin_id, destination_id
+    colJson.collectionCity.forEach(datas => {
+        if(datas.city_name.toLowerCase() === origin_city.toLowerCase()){
+            origin_id = datas.city_id
+            return false
+        }
+    })
+    colJson.collectionCity.forEach(datas => {
+        if(datas.city_name.toLowerCase() === destination_city.toLowerCase()){
+            destination_id = datas.city_id
+            return false
+        }
+    })
+
+    if(origin_id, destination_id, weight){
+        var optionsRajaOngkir = {
+            method: 'POST',
+            url: 'https://api.rajaongkir.com/starter/cost',
+            headers: {key: '648f495779f4dd2047303047729f4df2', 'content-type': 'json'},
+            form: {origin: origin_id, destination: destination_id, weight: weight, courier: 'jne'}
+        }
+        try{
+            request(optionsRajaOngkir, function (err, response, body) {
+                if (err) throw new Error(err);
+                res.send({statQuo: '1', res: body})
+            });
+        } catch (err) {
+            console.log(err)
+            res.send('-1')
+        }
+    }
+})
 // SANBOX PAYMENT
+
+app.post('/customer/delete/address/', (req, res) => {
+    const {id} = req.body
+    let query = `DELETE FROM address WHERE address.addressid = '${id}'`
+    try {
+        db.query(query, (err, fields) => {
+            res.send('1')
+        })
+    } catch (err) {
+        console.log(err)
+        res.send('-1')
+    }
+})
+
+app.post('/customer/update/address/', (req, res) => {
+    const {addressid, fulladdress, city, postcode, phoneaddress, note} = req.body
+    let query = `UPDATE address SET fulladdress = '${fulladdress}', city = '${city}', postcode = '${postcode}', phoneAddress = '${phoneaddress}', note = '${note}' WHERE address.addressid = '${addressid}' `
+    try {
+        db.query(query, (err, fields) => {
+            if(fields.affectedRows){
+                res.send('1')
+            } else {
+                res.send('-2')
+            }
+        })
+    } catch (err) {
+        console.log(err)
+        res.send('-1')
+    }
+})
+
+
 app.listen(port, () => {
   console.log(`Example app listening on port ${port}`)
 })
