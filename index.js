@@ -1226,16 +1226,16 @@ app.post('/secure/merchant/check/auth', (req, res) => {
 app.post('/save/order/to/cart', (req, res) => {
     const {
         copies, pages, totalquantity, totalcost, color, quality, 
-        papertype, inputedfile, orderNote, productid, consumerid
+        papertype, inputedfile, orderNote, productid, consumerid, totalweight
     } = req.body
     try {
         let query = `
             INSERT INTO orderdata (orderid, numofcopies, pages, totalquantity, 
-                totalcost, colortype, printingquality, productype, fileprintingurl, ordernote, 
+                totalcost, totalWeight, colortype, printingquality, productype, fileprintingurl, ordernote, 
                 orderStatus, transactionid, productid, consumerid) 
             VALUES 
             (NULL, '${copies}', '${pages}', '${totalquantity}', 
-            '${totalcost}', '${color}', '${quality}', '${papertype}', '${inputedfile}', 
+            '${totalcost}', '${totalweight}', '${color}', '${quality}', '${papertype}', '${inputedfile}', 
             '${orderNote}', 'Pending', '-1', '${productid}', '${consumerid}') 
         `
         db.query(query, (err, fields) => {
@@ -1349,39 +1349,19 @@ app.get('/customer/view/address/:id', (req, res) => {
 // SANBOX PAYMENT
 // =============UNDER CONSTRUCTION-------------- //
 app.post('/secure/consumer/payment', (req, res) => {
-
-    // snap.createTransaction(req.body)
-    // .then((transaction)=>{
-    //     // transaction token
-    //     let transactionToken = transaction.token;
-    //     console.log('transactionToken:',transactionToken);
-
-    //     // transaction redirect url
-    //     let transactionRedirectUrl = transaction.redirect_url;
-    //     console.log('transactionRedirectUrl:',transactionRedirectUrl);
-    //     res.json({
-    //         status: true,
-    //         msg: 'Success',
-    //         data: transactionRedirectUrl
-    //     })
-    // })
-    // .catch((e)=>{
-    //     console.log('Error occured:',e.message);
-    //     res.json({
-    //         status: false,
-    //         msg: e.message
-    //     })
-    // });
-
+    console.log(req.body);
     coreApi.charge(req.body).then((chargeResponse)=>{
         let orderData = {
             id: chargeResponse.order_id,
-            response_midtrans: JSON.stringify(chargeResponse)
+            response_midtrans: JSON.stringify(chargeResponse),
+            order_arrays: req.body.item_details_ops
         }
+        console.log( orderData);
         res.json({
             status: true,
             msg: 'Success',
-            data: chargeResponse
+            data: chargeResponse,
+            opsSaved: orderData
         })
     }).catch((e)=>{
         console.log('Error occured:',e.message);
@@ -1391,11 +1371,29 @@ app.post('/secure/consumer/payment', (req, res) => {
         })
     });
 })
+// SANBOX PAYMENT
+
+app.get('/secure/consumer/payment/status/:transaction_id', (req, res) => {
+    const options = {
+        method: 'GET',
+        url: 'https://api.sandbox.midtrans.com/v2/1683297151/status/',
+        headers: {
+            accept: 'application/json',
+            authorization: 'Basic U0ItTWlkLXNlcnZlci1ZWUtDa3piekZQczZPVldhT0s2bDV1LWM6'
+        }
+    };
+    
+    request(options, function (error, response, body) {
+    if (error) throw new Error(error);
+        res.send(JSON.parse(body))
+    console.log(body);
+    });
+})
 
 var colJson = require('./rajaOngkirCity.json')
 
 app.get('/shipping/cost', (req, res) => {
-    const {origin_city, destination_city, weight} = req.query
+    const {origin_city, destination_city, weight, option} = req.query
     console.log(origin_city, destination_city);
 
     let origin_id, destination_id
@@ -1416,13 +1414,14 @@ app.get('/shipping/cost', (req, res) => {
         var optionsRajaOngkir = {
             method: 'POST',
             url: 'https://api.rajaongkir.com/starter/cost',
-            headers: {key: '648f495779f4dd2047303047729f4df2', 'content-type': 'json'},
+            headers: {key: process.env.LOCKED_API_RAJAONGKIR, 'content-type': 'json'},
             form: {origin: origin_id, destination: destination_id, weight: weight, courier: 'jne'}
         }
         try{
             request(optionsRajaOngkir, function (err, response, body) {
                 if (err) throw new Error(err);
                 res.send({statQuo: '1', res: body})
+
             });
         } catch (err) {
             console.log(err)
@@ -1430,7 +1429,6 @@ app.get('/shipping/cost', (req, res) => {
         }
     }
 })
-// SANBOX PAYMENT
 
 app.post('/customer/delete/address/', (req, res) => {
     const {id} = req.body
