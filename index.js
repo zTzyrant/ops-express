@@ -164,6 +164,7 @@ let month = ("0" + (date_ob.getMonth() + 1)).slice(-2);
 let year = date_ob.getFullYear();
 
 let datenow = `${year}-${month}-${date}`
+
 console.log(datenow);
 
 
@@ -1226,17 +1227,17 @@ app.post('/secure/merchant/check/auth', (req, res) => {
 app.post('/save/order/to/cart', (req, res) => {
     const {
         copies, pages, totalquantity, totalcost, color, quality, 
-        papertype, inputedfile, orderNote, productid, consumerid, totalweight
+        papertype, inputedfile, orderNote, productid, consumerid, totalweight, merchantid
     } = req.body
     try {
         let query = `
             INSERT INTO orderdata (orderid, numofcopies, pages, totalquantity, 
                 totalcost, totalWeight, colortype, printingquality, productype, fileprintingurl, ordernote, 
-                orderStatus, transactionid, productid, consumerid) 
+                orderStatus, transactionid, productid, consumerid, merchantid) 
             VALUES 
             (NULL, '${copies}', '${pages}', '${totalquantity}', 
             '${totalcost}', '${totalweight}', '${color}', '${quality}', '${papertype}', '${inputedfile}', 
-            '${orderNote}', 'Pending', '-1', '${productid}', '${consumerid}') 
+            '${orderNote}', 'Pending', '-1', '${productid}', '${consumerid}', '${merchantid}') 
         `
         db.query(query, (err, fields) => {
             console.log(fields);
@@ -1349,7 +1350,19 @@ app.get('/customer/view/address/:id', (req, res) => {
 // SANBOX PAYMENT
 // =============UNDER CONSTRUCTION-------------- //
 app.post('/secure/consumer/payment', (req, res) => {
-    console.log(req.body);
+    const orderOPS = req.body.item_details_ops.collection_order
+    const shipping = req.body.shippingOptions
+    let payment_type = 'Unset'
+
+    if(req.body.payment_type === 'cstore'){
+        payment_type = req.body.cstore.store
+    } else {
+        payment_type = req.body.bank_transfer.bank
+    }
+
+    const costs = req.body.transaction_details.gross_amount
+    let timeNow = `${date_ob.getHours()}:${date_ob.getMinutes()}:${date_ob.getSeconds()}`
+    
     coreApi.charge(req.body).then((chargeResponse)=>{
         let orderData = {
             id: chargeResponse.order_id,
@@ -1357,37 +1370,112 @@ app.post('/secure/consumer/payment', (req, res) => {
             order_arrays: req.body.item_details_ops
         }
         console.log( orderData);
-        res.json({
-            status: true,
-            msg: 'Success',
-            data: chargeResponse,
-            opsSaved: orderData
+        let query = `
+        INSERT INTO transaction (
+            transactionID, shippingOptions, shippingreceipt, paymentOptions, costs, 
+            transactionStatus, response_midtrans, dateTransaction, timeTransaction, dateDoneTrans, 
+            timeDoneTrans) VALUES (
+            NULL, '${shipping}', 'PENDING', '${payment_type}', '${costs}', 
+            'PENDING', '${JSON.stringify(chargeResponse)}', '${datenow}', '${timeNow}', NULL, NULL) 
+        `
+        db.query(query, (err, fields) => {
+            if(!err){
+                let db_status = true
+                orderOPS.forEach(element => {
+                    element.forEach(result => {
+                        console.log(result.orderid);
+                        let query1 = `
+                            UPDATE orderdata SET transactionid = '${fields.insertId}',
+                            orderStatus = 'Waiting'
+                            WHERE orderdata.orderid = '${result.orderid}'
+
+                        `
+                        db.query(query1, (err1, fields2) => {
+                            if(err1){
+                                db_status = false
+                            }
+                        })
+                    });
+                });
+                if(db_status){
+                    res.send({statusQuo: '1', transaction_id: fields.insertId})
+                } else {
+                    res.send({statusQuo: '-3'})
+                }
+            } else {
+                console.log(err);
+                res.send({statusQuo: '-2'})
+            }
         })
+        
     }).catch((e)=>{
         console.log('Error occured:',e.message);
-        res.json({
-            status: false,
-            msg: e.message
-        })
+        res.send({statusQuo: '-1'})
     });
 })
 // SANBOX PAYMENT
 
 app.get('/secure/consumer/payment/status/:transaction_id', (req, res) => {
-    const options = {
-        method: 'GET',
-        url: 'https://api.sandbox.midtrans.com/v2/1683297151/status/',
-        headers: {
-            accept: 'application/json',
-            authorization: 'Basic U0ItTWlkLXNlcnZlci1ZWUtDa3piekZQczZPVldhT0s2bDV1LWM6'
-        }
-    };
+   
     
-    request(options, function (error, response, body) {
-    if (error) throw new Error(error);
-        res.send(JSON.parse(body))
-    console.log(body);
-    });
+    
+    const transaction_id = req.params.transaction_id
+    let query0 = `
+        SELECT * FROM transaction WHERE transaction.transactionID = ${transaction_id}
+    `
+    let query1 = `
+        SELECT * FROM orderdata WHERE orderdata.transactionid = '${transaction_id}'
+    `
+    try {
+        db.query(query0, (err, fields) => {
+            
+            if(fields.length > 0){
+                db.query(query1, (err1, fields1) => {
+                    fields[0].dateTransaction = moment(fields[0].dateTransaction).utc(8).format('DD MMM YYYY')
+                    if(fields1.length > 0){
+
+                        fields1.forEach((e, indx) => {
+                            let query2 = `SELECT * FROM merchant INNER JOIN address ON merchant.addressid = address.addressid WHERE merchant.merchantid = '${fields1[indx].merchantid}'`
+                            db.query(query2, (err2, fields2) => {
+                                if(fields2.length > 0) {
+                                    fields1[indx] = {order: fields1[indx], merchant_info: fields2}
+                                } else {
+                                    res.send({statusQuo: '-4'})
+                                }
+                            })
+                        });
+                        const options = {
+                            method: 'GET',
+                            url: `https://api.sandbox.midtrans.com/v2/${JSON.parse(fields[0].response_midtrans).order_id}/status/`,
+                            headers: {
+                                accept: 'application/json',
+                                authorization: 'Basic U0ItTWlkLXNlcnZlci1ZWUtDa3piekZQczZPVldhT0s2bDV1LWM6'
+                            }
+                        };
+                        request(options, function (error, response, body) {
+                            if (error) throw new Error(error);
+                            res.send({
+                                statQuo: '1',
+                                transaction_data: fields[0],
+                                orderData: fields1,
+                                midtrans_payments: JSON.parse(fields[0].response_midtrans),
+                                responese_midtrans: JSON.parse(body)
+                            });
+                        });
+                        
+                    } else {
+                        res.send({statusQuo: '-3'})
+                    }
+                })
+            } else {
+                res.send({statusQuo: '-2'})
+            }
+        })
+    } catch (e) {
+        console.log(e);
+        res.send({statusQuo: '-1'})
+    }
+    
 })
 
 var colJson = require('./rajaOngkirCity.json')
