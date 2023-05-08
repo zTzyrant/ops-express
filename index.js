@@ -461,7 +461,6 @@ app.get('/show-merchant', (req, res) => {
     query = `SELECT * FROM merchant INNER JOIN address ON merchant.addressid = address.addressid `
     db.query(query, (err, fields) => {
         fields = fields.map(row => {
-            // row.datecreated = row.datecreated.toISOString().split('T')[0];
             row.datecreated = moment(row.datecreated).utc(8).format('YYYY-MM-DD')
             return row;
         });
@@ -1229,18 +1228,20 @@ app.post('/save/order/to/cart', (req, res) => {
         copies, pages, totalquantity, totalcost, color, quality, 
         papertype, inputedfile, orderNote, productid, consumerid, totalweight, merchantid
     } = req.body
+
+
+    console.log(req.body);
     try {
         let query = `
             INSERT INTO orderdata (orderid, numofcopies, pages, totalquantity, 
                 totalcost, totalWeight, colortype, printingquality, productype, fileprintingurl, ordernote, 
-                orderStatus, transactionid, productid, consumerid, merchantid) 
+                orderStatus, shippingreceipt, transactionid, productid, consumerid, merchantid) 
             VALUES 
             (NULL, '${copies}', '${pages}', '${totalquantity}', 
             '${totalcost}', '${totalweight}', '${color}', '${quality}', '${papertype}', '${inputedfile}', 
-            '${orderNote}', 'Pending', '-1', '${productid}', '${consumerid}', '${merchantid}') 
+            '${orderNote}', 'Pending', 'PENDING', '-1', '${productid}', '${consumerid}', '${merchantid}') 
         `
         db.query(query, (err, fields) => {
-            console.log(fields);
             if(fields){
                 res.send('1')
             } else {
@@ -1352,6 +1353,8 @@ app.get('/customer/view/address/:id', (req, res) => {
 app.post('/secure/consumer/payment', (req, res) => {
     const orderOPS = req.body.item_details_ops.collection_order
     const shipping = req.body.shippingOptions
+    const addressid = req.body.address_id
+    const shipping_via = req.body.shipping_via
     let payment_type = 'Unset'
 
     if(req.body.payment_type === 'cstore'){
@@ -1369,16 +1372,15 @@ app.post('/secure/consumer/payment', (req, res) => {
             response_midtrans: JSON.stringify(chargeResponse),
             order_arrays: req.body.item_details_ops
         }
-        console.log( orderData);
         let query = `
         INSERT INTO transaction (
-            transactionID, shippingOptions, shippingreceipt, paymentOptions, costs, 
+            transactionID, shippingOptions, addressid, shippingvia, paymentOptions, costs, payment_status,
             transactionStatus, response_midtrans, dateTransaction, timeTransaction, dateDoneTrans, 
             timeDoneTrans) VALUES (
-            NULL, '${shipping}', 'PENDING', '${payment_type}', '${costs}', 
+            NULL, '${shipping}', '${addressid}', '${shipping_via}', '${payment_type}', '${costs}', '${chargeResponse.transaction_status}', 
             'PENDING', '${JSON.stringify(chargeResponse)}', '${datenow}', '${timeNow}', NULL, NULL) 
         `
-        db.query(query, (err, fields) => {
+         db.query(query, (err, fields) => {
             if(!err){
                 let db_status = true
                 orderOPS.forEach(element => {
@@ -1416,9 +1418,6 @@ app.post('/secure/consumer/payment', (req, res) => {
 // SANBOX PAYMENT
 
 app.get('/secure/consumer/payment/status/:transaction_id', (req, res) => {
-   
-    
-    
     const transaction_id = req.params.transaction_id
     let query0 = `
         SELECT * FROM transaction WHERE transaction.transactionID = ${transaction_id}
@@ -1431,9 +1430,8 @@ app.get('/secure/consumer/payment/status/:transaction_id', (req, res) => {
             
             if(fields.length > 0){
                 db.query(query1, (err1, fields1) => {
-                    fields[0].dateTransaction = moment(fields[0].dateTransaction).utc(8).format('DD MMM YYYY')
                     if(fields1.length > 0){
-
+                        fields[0].dateTransaction = moment(fields[0].dateTransaction).utc(8).format('DD MMM YYYY')
                         fields1.forEach((e, indx) => {
                             let query2 = `SELECT * FROM merchant INNER JOIN address ON merchant.addressid = address.addressid WHERE merchant.merchantid = '${fields1[indx].merchantid}'`
                             db.query(query2, (err2, fields2) => {
@@ -1454,13 +1452,21 @@ app.get('/secure/consumer/payment/status/:transaction_id', (req, res) => {
                         };
                         request(options, function (error, response, body) {
                             if (error) throw new Error(error);
-                            res.send({
-                                statQuo: '1',
-                                transaction_data: fields[0],
-                                orderData: fields1,
-                                midtrans_payments: JSON.parse(fields[0].response_midtrans),
-                                responese_midtrans: JSON.parse(body)
-                            });
+                            let query_update = `UPDATE transaction SET payment_status = '${JSON.parse(body).transaction_status}' WHERE transaction.transactionID = '${transaction_id}'`
+                            db.query(query_update, (err, fields3) => {
+                                if(!err){
+                                    res.send({
+                                        statQuo: '1',
+                                        transaction_data: fields[0],
+                                        orderData: fields1,
+                                        midtrans_payments: JSON.parse(fields[0].response_midtrans),
+                                        responese_midtrans: JSON.parse(body)
+                                    });
+                                } else {
+                                    res.send({statusQuo: '-5'})
+                                }
+                            })
+                           
                         });
                         
                     } else {
@@ -1548,6 +1554,53 @@ app.post('/customer/update/address/', (req, res) => {
     }
 })
 
+app.get('/secure/merchant/view/orders/:merchant_id', (req, res) => {
+    const merchant_id = req.params.merchant_id
+    let query = `
+        SELECT orderdata.*, transaction.*, consumer.*, user.username, user.fullname, 
+        user.gender, user.email, user.phone, address.*, merchant.merchantname FROM orderdata 
+        INNER JOIN transaction ON orderdata.transactionid = transaction.transactionID 
+        INNER JOIN consumer ON orderdata.consumerid = consumer.consid 
+        INNER JOIN user ON consumer.userid = user.userid 
+        LEFT JOIN address ON transaction.addressid = address.addressid
+        INNER JOIN merchant ON merchant.merchantid = orderdata.merchantid
+        WHERE
+        transaction.payment_status = 'settlement' AND 
+        orderdata.merchantid = '${merchant_id}'`
+    db.query(query, (err, fields) => {
+        if(!err && fields.length > 0){
+            fields = fields.map(row => {
+                row.dateTransaction = moment(row.dateTransaction).utc(8).format('DD-MM-YYYY')
+                return row;
+            });
+            res.send({statusQuo: '1', orders_datas: fields})
+        } else {
+            console.log(err)
+            res.send({statusQuo: '-2'})
+        }
+    })
+})
+
+app.post('/secure/merchant/update/order', (req, res) => {
+    const {order_id, order_status, shipping_receipt} = req.body
+    if(order_id && order_status){
+        let query = ``
+        if(shipping_receipt){
+            query = `UPDATE orderdata SET orderStatus = '${order_status}', shippingreceipt = '${shipping_receipt}' WHERE orderdata.orderid = '${order_id}'`
+        } else {
+            query = `UPDATE orderdata SET orderStatus = '${order_status}' WHERE orderdata.orderid = '${order_id}`
+        }
+        db.query(query, (err, fields) => {
+            if(!err && fields.affectedRows > 0) {
+                res.send({statusQuo: '1'})
+            } else {
+                res.send({statusQuo: '-2'})
+            }
+        })
+    } else {
+        res.send({statusQuo: '-1'})
+    }
+})
 
 app.listen(port, () => {
   console.log(`Example app listening on port ${port}`)
