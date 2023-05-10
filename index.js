@@ -1432,7 +1432,14 @@ app.get('/secure/consumer/payment/status/:transaction_id', (req, res) => {
                 db.query(query1, (err1, fields1) => {
                     if(fields1.length > 0){
                         fields[0].dateTransaction = moment(fields[0].dateTransaction).utc(8).format('DD MMM YYYY')
+                        if(fields[0].dateDoneTrans !== null){
+                            fields[0].dateDoneTrans = moment(fields[0].dateDoneTrans).utc(8).format('DD MMM YYYY')
+                        }
+                        let allOrderDone = true
                         fields1.forEach((e, indx) => {
+                            if(e.orderStatus !== 'Done'){
+                                allOrderDone = false
+                            }
                             let query2 = `SELECT * FROM merchant INNER JOIN address ON merchant.addressid = address.addressid WHERE merchant.merchantid = '${fields1[indx].merchantid}'`
                             db.query(query2, (err2, fields2) => {
                                 if(fields2.length > 0) {
@@ -1442,6 +1449,39 @@ app.get('/secure/consumer/payment/status/:transaction_id', (req, res) => {
                                 }
                             })
                         });
+                        let date_ob = new Date();
+
+                        let date = ("0" + date_ob.getDate()).slice(-2);
+                        let month = ("0" + (date_ob.getMonth() + 1)).slice(-2);
+                        let year = date_ob.getFullYear();
+                        let datenow = `${year}-${month}-${date}`
+                        let timeNow = `${date_ob.getHours()}:${date_ob.getMinutes()}:${date_ob.getSeconds()}`
+
+                        let query3 = `
+                            UPDATE transaction SET transactionStatus = 'Done', dateDoneTrans = '${datenow}', timeDoneTrans = '${timeNow}' WHERE transaction.transactionID = ${transaction_id}
+                        `
+                        if(allOrderDone){
+                            query3 = `
+                                UPDATE transaction SET 
+                                    transactionStatus = 'DONE', 
+                                    dateDoneTrans = '${datenow}', 
+                                    timeDoneTrans = '${timeNow}' 
+                                WHERE transaction.transactionID = ${transaction_id}
+                            `
+                        } else {
+                            query3 = `
+                                UPDATE transaction SET 
+                                    transactionStatus = 'PENDING', 
+                                    dateDoneTrans = NULL, 
+                                    timeDoneTrans = NULL 
+                                WHERE transaction.transactionID = ${transaction_id}
+                            `
+                        }
+                        db.query(query3, (err3, fields3) => {
+                            if(err3) throw (err3)
+                            console.log(fields3);
+                        })
+                        console.log(allOrderDone);
                         const options = {
                             method: 'GET',
                             url: `https://api.sandbox.midtrans.com/v2/${JSON.parse(fields[0].response_midtrans).order_id}/status/`,
@@ -1600,6 +1640,43 @@ app.post('/secure/merchant/update/order', (req, res) => {
     } else {
         res.send({statusQuo: '-1'})
     }
+})
+
+app.get('/secure/merchant/sales/report/:merchant_id', (req, res) => {
+    const merchant_id = req.params.merchant_id
+    let get_all_product_costs = `SELECT SUM(producttype.quantity * producttype.paperprice) AS total_expectations_sales FROM product INNER JOIN producttype ON product.productid = producttype.productid WHERE product.merchantid = '${merchant_id}'`
+    let get_total_order_costs = `SELECT SUM(orderdata.totalcost) AS total_order_costs FROM orderdata INNER JOIN transaction ON orderdata.transactionid = transaction.transactionID WHERE orderdata.merchantid = '${merchant_id}' AND orderdata.orderStatus = 'Done' AND transaction.transactionStatus = 'DONE'`
+    let get_total_products = `SELECT COUNT(producttype.papertype) AS total_product FROM product INNER JOIN producttype ON product.productid = producttype.productid WHERE product.merchantid = '${merchant_id}'`
+    let get_total_sold_product_wquantity = `SELECT SUM(orderdata.totalquantity) AS total_sales_product FROM orderdata INNER JOIN producttype ON orderdata.productype = producttype.papertype WHERE orderdata.merchantid = '${merchant_id}' AND orderdata.orderStatus = 'Done'`
+    let get_orders_with_costs = `SELECT SUM(orderdata.totalquantity) AS total_quantity, SUM(orderdata.totalcost) AS total_costs, (orderdata.productype) AS product FROM orderdata INNER JOIN producttype ON orderdata.productype = producttype.papertype WHERE orderdata.merchantid = '${merchant_id}' AND orderdata.orderStatus = 'Done'`
+    try {
+        db.query(get_all_product_costs, (err, fields) => {
+            db.query(get_total_order_costs, (err1, fields1) => {
+                db.query(get_total_products, (err2, fields2) => {
+                    db.query(get_total_sold_product_wquantity, (err3, fields3) => {
+                        db.query(get_orders_with_costs, (err4, fields4) => {
+                            if(fields && fields1 && fields2 && fields3 && fields4){
+                                res.send({
+                                    statQuo: '1', 
+                                    f1: fields[0], 
+                                    f2: fields1[0], 
+                                    f3: fields2[0], 
+                                    f4: fields3[0],
+                                    get_orders_with_costs: fields4
+                                })
+                            } else {
+                                res.send({statQuo: '-2'})
+                            }
+                        })
+                    })
+                })
+            })
+        })
+    } catch (error) {
+        console.log(error);
+        res.send({statQuo: '-1'})
+    }
+    
 })
 
 app.listen(port, () => {
