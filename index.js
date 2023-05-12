@@ -1679,6 +1679,62 @@ app.get('/secure/merchant/sales/report/:merchant_id', (req, res) => {
     
 })
 
+app.get('/secure/merchant/income/today/:merchant_id', (req, res) => {
+    const merchant_id = req.params.merchant_id
+    let date = ("0" + date_ob.getDate()).slice(-2);
+    let month = ("0" + (date_ob.getMonth() + 1)).slice(-2);
+    let year = date_ob.getFullYear();
+    let datenow = `${year}-${month}-${date}`
+
+    let get_total_order_costs = `SELECT SUM(orderdata.totalcost) AS total_order_costs FROM orderdata INNER JOIN transaction ON orderdata.transactionid = transaction.transactionID WHERE orderdata.merchantid = '${merchant_id}' AND orderdata.orderStatus = 'Done' AND transaction.transactionStatus = 'DONE' AND transaction.dateDoneTrans = '${datenow}'`
+    let get_total_sold_product_wquantity = `SELECT SUM(orderdata.totalquantity) AS total_sales_product_today FROM orderdata INNER JOIN producttype ON orderdata.productype = producttype.papertype INNER JOIN transaction ON orderdata.transactionid = transaction.transactionID WHERE orderdata.merchantid = '${merchant_id}' AND orderdata.orderStatus = 'Done' AND transaction.dateDoneTrans = '${datenow}';`
+    let get_orders_with_costs = `SELECT SUM(orderdata.totalquantity) AS total_quantity, SUM(orderdata.totalcost) AS total_costs, (orderdata.productype) AS product, (transaction.dateTransaction) FROM orderdata INNER JOIN producttype ON orderdata.productype = producttype.papertype INNER JOIN transaction ON transaction.transactionID = orderdata.transactionid WHERE orderdata.merchantid = '${merchant_id}' AND transaction.dateTransaction = '${datenow}' AND transaction.transactionStatus = 'DONE'`
+    let query = `
+        SELECT orderdata.*, transaction.*, consumer.*, user.username, user.fullname, 
+        user.gender, user.email, user.phone, address.*, merchant.merchantname FROM orderdata 
+        INNER JOIN transaction ON orderdata.transactionid = transaction.transactionID 
+        INNER JOIN consumer ON orderdata.consumerid = consumer.consid 
+        INNER JOIN user ON consumer.userid = user.userid 
+        LEFT JOIN address ON transaction.addressid = address.addressid
+        INNER JOIN merchant ON merchant.merchantid = orderdata.merchantid
+        WHERE
+        transaction.payment_status = 'settlement' AND 
+        orderdata.merchantid = '${merchant_id}' AND 
+        transaction.dateTransaction = '${datenow}'
+    `
+
+    try {
+        db.query(get_total_order_costs, (err, fields) => {
+            db.query(get_total_sold_product_wquantity, (err1, fields1) => {
+                db.query(get_orders_with_costs, (err2, fields2) => {
+                    db.query(query, (err3, fields3) => {
+                        if(fields || fields1 || fields2 || fields3){
+                            fields3 = fields3.map(row => {
+                                row.dateTransaction = moment(row.dateTransaction).utc(8).format('DD MMM YYYY')
+                                return row;
+                            });
+                            res.send({
+                                statQuo: '1', 
+                                total_income_today: fields[0], 
+                                total_sales_product_today: fields1[0], 
+                                collection_info_orders_today: fields2, 
+                                orders_today: fields3,
+                            })
+                        } else {
+                            res.send({statQuo: '-2'})
+                        }
+                    })
+                })
+            })
+        })
+    } catch (error) {
+        console.log(error);
+        res.send({statQuo: '-1'})
+    }
+
+    
+
+})
 app.listen(port, () => {
   console.log(`Example app listening on port ${port}`)
 })
