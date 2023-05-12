@@ -483,20 +483,20 @@ app.post('/registermerchant', (req, res) => {
         fulladdress, city, postcode, phoneaddress, note, // table address
         username, password, fullname, gender, email, phone, // table user
         position, cardid, // table adminprinting
-        merchantuname, merchantname, opentime, closetime, merchantlogo  // table merchant
+        merchantuname, merchantname, opentime, closetime, merchantlogo, subscription_type// table merchant
     } = req.body
 
     if(fulladdress && city && postcode && phoneaddress && 
         username && password && fullname && gender && email && phone && 
         position && cardid && 
-        merchantuname && merchantname && opentime && closetime && merchantlogo 
+        merchantuname && merchantname && opentime && closetime && merchantlogo && subscription_type
     ){
         addressSQL = `INSERT INTO address (addressid, fulladdress, city, postcode, phoneAddress, note) VALUES 
         (NULL, '${fulladdress}', '${city}', '${postcode}', '${phoneaddress}', '${note}')`
         db.query(addressSQL, (err1, fields1)=>{ // add address
             if(err1) throw err1
-            merchantSQL = `INSERT INTO merchant (merchantid, merchantuname, merchantname, datecreated, opentime, closetime, merchantlogo, ownerid, addressid) 
-            VALUES (NULL, '${merchantuname}', '${merchantname}', '${datenow}', '${opentime}', '${closetime}', '${merchantlogo}', '-1', '${fields1.insertId}') `
+            merchantSQL = `INSERT INTO merchant (merchantid, merchantuname, merchantname, datecreated, opentime, closetime, merchantlogo, subscription_type, ownerid, addressid) 
+            VALUES (NULL, '${merchantuname}', '${merchantname}', '${datenow}', '${opentime}', '${closetime}', '${merchantlogo}', '${subscription_type}', '-1', '${fields1.insertId}') `
             db.query(merchantSQL, (err2, fields2)=>{ // add merchant
                 if(err2) throw err2
                 userSQL = `INSERT INTO user (userid, username, password, fullname, gender, email, phone) 
@@ -665,7 +665,7 @@ app.put('/changes/developer/update/merchant', (req, res) => {
     const {
         // Merchant Info
         merchantid, edmerchuname, edmerchname, edmerchdate,
-        edmerchopen, edmerchclose, edmerchantlogo,
+        edmerchopen, edmerchclose, edmerchantlogo, subscription_type,
         // Merchant Address
         addressid, edmerchaddress, edmerchcity, edmerchpostcode, 
         edmerchtcp, edmerchtinfo
@@ -674,7 +674,7 @@ app.put('/changes/developer/update/merchant', (req, res) => {
     sqlMerchant = `UPDATE merchant SET merchantuname = '${edmerchuname}',
         merchantname = '${edmerchname}', datecreated = '${edmerchdate}',
         opentime = '${edmerchopen}', closetime = '${edmerchclose}',
-        merchantlogo = '${edmerchantlogo}'
+        merchantlogo = '${edmerchantlogo}', subscription_type = '${subscription_type}'
         WHERE merchant.merchantid = ${merchantid}
     `
     sqlAddress = `UPDATE address SET fulladdress = '${edmerchaddress}', city = 
@@ -685,7 +685,7 @@ app.put('/changes/developer/update/merchant', (req, res) => {
     if(edmerchantlogo === "" || edmerchantlogo === null){
         sqlMerchant = `UPDATE merchant SET merchantuname = '${edmerchuname}',
             merchantname = '${edmerchname}', datecreated = '${edmerchdate}', 
-            opentime = '${edmerchopen}', closetime = '${edmerchclose}'
+            opentime = '${edmerchopen}', closetime = '${edmerchclose}', subscription_type = '${subscription_type}'
             WHERE merchant.merchantid = ${merchantid}
         `    
     }
@@ -1735,6 +1735,49 @@ app.get('/secure/merchant/income/today/:merchant_id', (req, res) => {
     
 
 })
+
+
+app.get('/user/customer/view/order/history/:user_id', (req, res) => {
+    const userid = req.params.user_id;
+    let query0 = `
+        SELECT * FROM transaction
+    `
+    
+    db.query(query0, (err, fields) => {
+        let tem_order = []
+        fields.forEach(dat0 => {
+            let query1 = `
+                SELECT orderdata.*, user.fullname, user.email, user.phone, user.username, user.gender, address.*, merchant.*
+
+                FROM orderdata 
+                INNER JOIN transaction ON orderdata.transactionid = transaction.transactionID
+                INNER JOIN merchant ON orderdata.merchantid = merchant.merchantid
+                INNER JOIN consumer ON consumer.consid = orderdata.consumerid
+                INNER JOIN user ON consumer.userid = user.userid
+                LEFT JOIN address ON transaction.addressid = address.addressid
+                WHERE user.userid = '${userid}' AND orderdata.transactionid = '${dat0.transactionID}'
+            `
+            db.query(query1, (err, fields1) => {
+                let query1 = `
+                    SELECT address.*
+                    FROM orderdata 
+                    INNER JOIN transaction ON orderdata.transactionid = transaction.transactionID
+                    INNER JOIN merchant ON orderdata.merchantid = merchant.merchantid
+                    INNER JOIN address ON merchant.addressid = address.addressid
+                    WHERE orderdata.transactionid = '${dat0.transactionID}'
+                `
+                db.query(query1, (err1, fields2) => {
+                    tem_order.push({transaction_data: dat0, orders: fields1, merchant_address: fields2[0]})
+                    if(dat0 === fields[fields.length - 1]){
+                        res.send({statusQuo: '1', result: tem_order})
+                    }
+                })
+            })
+        });
+        
+    })
+})
+
 app.listen(port, () => {
   console.log(`Example app listening on port ${port}`)
 })
