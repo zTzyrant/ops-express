@@ -34,7 +34,8 @@ const { env } = require('process')
 
 app.use(cors({
     origin: "*",
-    credentials: true
+    credentials: true,
+    allowedHeaders: 'Content-Type',
 }));
 
 
