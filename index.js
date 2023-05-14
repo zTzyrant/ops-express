@@ -1,10 +1,19 @@
 require('dotenv').config()
+const yargs = require('yargs')
+const { hideBin } = require('yargs/helpers')
+const argv = yargs(hideBin(process.argv)).argv
+let db
+
+if(argv.prod === 'true'){
+    db = require('./connection/connection.prod')
+} else {
+    db = require('./connection/connection')
+}
 const express = require('express')
 const cors = require('cors')
 const app = express()
 const port = 3000
 const bodyparser = require('body-parser')
-const db = require('./connection/connection')
 const response = require('./response/response')
 const responseRegister = require('./response/responseregist')
 const CryptoJS = require('crypto-js')

@@ -32,6 +32,7 @@
     "nodemon": "^2.0.20",
     "path": "^0.12.7",
     "pdf-page-counter": "^1.0.3",
-    "request": "^2.88.2"
+    "request": "^2.88.2",
+    "yargs": "^17.7.2"
   }
 }
