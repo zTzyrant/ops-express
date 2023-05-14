@@ -196,7 +196,7 @@ app.get('/checkToken', (req, res) => {
     console.log("New: " + decrypted.toString(CryptoJS.enc.Utf8) + " From: " + req.query.email);
     let checkToken = decrypted.toString(CryptoJS.enc.Utf8) === req.query.email
     if(checkToken){
-        res.send('1')
+        res.status(200)
     } else {
         res.send('-1')
     }
@@ -220,13 +220,13 @@ app.get('/updatePassowrd', (req, res) => {
             console.log(result);
             if(result.affectedRows > 0){
                 console.log(`Success Update password to: { ${newPass} } for email: ${email}`);
-                res.send('1')
+                res.status(200)
             }else{
-                res.send('-2')
+                res.status(401)
             }
         })
     } else {
-        res.send('-1')
+        res.status(401);
     }
 })
 
@@ -241,9 +241,9 @@ app.post('/updateCustomer', (req, res) => {
                 console.log(result);
                 if(result.affectedRows > 0){
                     console.log(`Success Update account information for email: ${email}`);
-                    res.send('1')
+                    res.status(200)
                 }else{
-                    res.send('-2')
+                    res.status(401)
             }
         })
     } else{
@@ -510,7 +510,7 @@ app.post('/registermerchant', (req, res) => {
                         setAdminIdasOwner = `UPDATE merchant SET ownerid = '${fields4.insertId}' WHERE merchant.merchantid = '${fields2.insertId}'`
                         db.query(setAdminIdasOwner, (err5, fields5) => {
                             if(err5) throw err5
-                            res.send('1')
+                            res.status(200)
                         })
                     })
                 })
@@ -652,8 +652,8 @@ app.post('/unchanges/developer/delete/merchant', (req, res) => {
     db.query(query1, (err) => {
         if (err) {console.log(err); res.send('-1')}
         db.query(query2, (err2) => {
-            if(err2){console.log(err2); res.send('-2')}
-            res.send('1')
+            if(err2){console.log(err2); res.status(401)}
+            res.status(200)
         })
     })
     
@@ -729,11 +729,11 @@ app.post('/changes/developer/post/merchant/admin', (req, res) => {
             VALUES (NULL, '${position}', '${cardid}', '${merchantid}', '${fields.insertId}') `
             db.query(adminprintingSQL, (err1, fields1) => {
                 if(err1){console.log(err1)}
-                res.send('1')
+                res.status(200)
             })
         })
     } else {
-        res.send('-2')
+        res.status(401)
     }
 })
 
@@ -742,8 +742,8 @@ app.post('/unchanges/developer/delete/merchant/admin', (req, res) => {
     const {userid} = req.body
     let query1 = `DELETE ` + `user` +` FROM user  WHERE userid = ${userid}`
     db.query(query1, (err) => {
-        if (err) {console.log(err); res.send('-2')}
-        res.send('1')
+        if (err) {console.log(err); res.status(401)}
+        res.status(200)
     })
 })
 
@@ -771,14 +771,14 @@ app.put('/changes/developer/update/merchant/admin', (req, res) => {
                 if(err){console.log(err)}
                 db.query(adminprintingSQL, (err1, fields1) => {
                     if(err1){console.log(err1)}
-                    res.send('1')
+                    res.status(200)
                 })
             })
         } catch (error) {
             res.send('-3')
         }
     } else {
-        res.send('-2')
+        res.status(401)
     }
 })
 
@@ -873,11 +873,11 @@ app.post('/changes/developer/post/merchant/product', (req, res) => {
         db.query(query, (err, fields) => {
             if(err) throw err
             if(fields.affectedRows > 0){
-                res.send('1')
+                res.status(200)
             }
         })
     } else {
-        res.send('-2')
+        res.status(401)
     }
 })
 
@@ -927,14 +927,14 @@ app.post('/changes/developer/post/merchant/product/types', (req, res) => {
             db.query(sql, (err, fields) => {
                 if(err) throw err
                 if(fields.affectedRows > 0){
-                    res.send('1')
+                    res.status(200)
                 }
             })
         } catch (error) {
             res.send('-1')
         }
     } else {
-        res.send('-2')
+        res.status(401)
     }
     
 })
@@ -949,14 +949,14 @@ app.post('/changes/developer/post/merchant/product/color', (req, res) => {
             db.query(sql, (err, fields) => {
                 if(err) throw err
                 if(fields.affectedRows > 0){
-                    res.send('1')
+                    res.status(200)
                 }
             })
         } catch (error) {
             res.send('-1')
         }
     } else {
-        res.send('-2')
+        res.status(401)
     }
 })
 
@@ -971,14 +971,14 @@ app.post('/changes/developer/post/merchant/product/quality', (req, res) => {
             db.query(sql, (err, fields) => {
                 if(err) throw err
                 if(fields.affectedRows > 0){
-                    res.send('1')
+                    res.status(200)
                 }
             })
         } catch (error) {
             res.send('-1')
         }
     } else {
-        res.send('-2')
+        res.status(401)
     }
 })
 
@@ -991,14 +991,14 @@ app.delete('/unchanges/developer/post/merchant/product/:id', (req, res) => {
             db.query(sql, (err, fields) => {
                 if(err) throw err
                 if(fields.affectedRows > 0){
-                    res.send('1')
+                    res.status(200)
                 }
             })
         } catch (error) {
             res.send('-1')
         }
     } else {
-        res.send('-2')
+        res.status(401)
     }
 })
 
@@ -1011,14 +1011,14 @@ app.delete('/unchanges/developer/post/merchant/product/type/:id', (req, res) => 
             db.query(sql, (err, fields) => {
                 if(err) throw err
                 if(fields.affectedRows > 0){
-                    res.send('1')
+                    res.status(200)
                 }
             })
         } catch (error) {
             res.send('-1')
         }
     } else {
-        res.send('-2')
+        res.status(401)
     }
 })
 
@@ -1031,14 +1031,14 @@ app.delete('/unchanges/developer/post/merchant/product/print/color/:id', (req, r
             db.query(sql, (err, fields) => {
                 if(err) throw err
                 if(fields.affectedRows > 0){
-                    res.send('1')
+                    res.status(200)
                 }
             })
         } catch (error) {
             res.send('-1')
         }
     } else {
-        res.send('-2')
+        res.status(401)
     }
 })
 
@@ -1051,14 +1051,14 @@ app.delete('/unchanges/developer/post/merchant/product/print/quality/:id', (req,
             db.query(sql, (err, fields) => {
                 if(err) throw err
                 if(fields.affectedRows > 0){
-                    res.send('1')
+                    res.status(200)
                 }
             })
         } catch (error) {
             res.send('-1')
         }
     } else {
-        res.send('-2')
+        res.status(401)
     }
 })
 
@@ -1075,14 +1075,14 @@ app.post('/changes/developer/update/merchant/product', (req, res) => {
             db.query(sql, (err, fields) => {
                 if(err) throw err
                 if(fields.affectedRows > 0){
-                    res.send('1')
+                    res.status(200)
                 }
             })
         } catch (error) {
             res.send('-1')
         }
     } else {
-        res.send('-2')
+        res.status(401)
     }
 })
 
@@ -1103,7 +1103,7 @@ app.post('/changes/developer/update/merchant/product/type', (req, res) => {
                 db.query(sql, (err, fields) => {
                     if(err) throw err
                     if(fields.affectedRows > 0){
-                        res.send('1')
+                        res.status(200)
                     }
                 })
             } catch (error) {
@@ -1118,7 +1118,7 @@ app.post('/changes/developer/update/merchant/product/type', (req, res) => {
                 db.query(sql, (err, fields) => {
                     if(err) throw err
                     if(fields.affectedRows > 0){
-                        res.send('1')
+                        res.status(200)
                     }
                 })
             } catch (error) {
@@ -1126,7 +1126,7 @@ app.post('/changes/developer/update/merchant/product/type', (req, res) => {
             }
         }
     } else {
-        res.send('-2')
+        res.status(401)
     }
 })
 
@@ -1142,7 +1142,7 @@ app.post('/changes/developer/update/merchant/product/print/color', (req, res) =>
             db.query(sql, (err, fields) => {
                 if(err) throw err
                 if(fields.affectedRows > 0){
-                    res.send('1')
+                    res.status(200)
                 }
             })
         } catch (error) {
@@ -1167,7 +1167,7 @@ app.post('/changes/developer/update/merchant/product/print/quality', (req, res) 
                     res.send('-4')
                 }
                 if(fields.affectedRows > 0){
-                    res.send('1')
+                    res.status(200)
                 }
             })
         } catch (error) {
@@ -1243,14 +1243,14 @@ app.post('/save/order/to/cart', (req, res) => {
         `
         db.query(query, (err, fields) => {
             if(fields){
-                res.send('1')
+                res.status(200)
             } else {
                 res.send('-1')
             }
         })
     } catch(err) {
         console.log(err);
-        res.send('-2')
+        res.status(401)
     } 
 })
 
@@ -1259,11 +1259,11 @@ app.post('/delete/order/from/cart', (req, res) => {
     let query = `DELETE FROM orderdata WHERE orderid = '${orderid}}'`
     try{
         db.query(query, (err, fields) => {
-            res.send('1')
+            res.status(200)
         })
     } catch (err) {
         console.log(err);
-        res.send('-2')
+        res.status(401)
     }
 })
 
@@ -1287,7 +1287,7 @@ app.get('/customer/view/cart/:id', (req, res) => {
         })
     } catch (err) {
         console.log(err);
-        res.send('-2')
+        res.status(401)
     }
 })
 
@@ -1316,13 +1316,13 @@ app.post('/customer/insert/address', (req, res) => {
                     let collectionAdressQuery = `INSERT INTO collectionaddress (idcollectionadd, addressid, userid) VALUES (NULL, '${fields.insertId}', '${userid}')`
                     db.query(collectionAdressQuery, (err1, fields2) => {
                         if(fields2){
-                            res.send('1')
+                            res.status(200)
                         } else {
                             res.send('-3')
                         }
                     })
                 } else {
-                    res.send('-2')
+                    res.status(401)
                 }
             })
         } catch (err){
@@ -1569,7 +1569,7 @@ app.post('/customer/delete/address/', (req, res) => {
     let query = `DELETE FROM address WHERE address.addressid = '${id}'`
     try {
         db.query(query, (err, fields) => {
-            res.send('1')
+            res.status(200)
         })
     } catch (err) {
         console.log(err)
@@ -1583,9 +1583,9 @@ app.post('/customer/update/address/', (req, res) => {
     try {
         db.query(query, (err, fields) => {
             if(fields.affectedRows){
-                res.send('1')
+                res.status(200)
             } else {
-                res.send('-2')
+                res.status(401)
             }
         })
     } catch (err) {
@@ -1779,7 +1779,7 @@ app.get('/user/customer/view/order/history/:user_id', (req, res) => {
 })
 
 app.listen(port, () => {
-  console.log(`Example app listening on port ${port}`)
+  console.log(`Example app listening on port http://localhost:${port}`)
 })
 
 
