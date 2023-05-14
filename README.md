@@ -14,3 +14,19 @@ IMPORTANT
 npm install           // install all package
 npm run ops           // run OPS-CORE default on port 3000
 ```
+
+USAGE
+dotenv required data
+```
+LOCKED_API_CUSTOMER = 'yoursalt'
+EMAIL_OPS_CORE = 'your@gmail.com'
+EMAIL_OPS_CORE_PSWD = 'yourpassword'
+LOCKED_API_PASSWORD = 'yourpasswordsalt'
+LOCKED_SECREAT_JWT = 'yourcustomsalt'
+LOCKED_API_RAJAONGKIR = 'yourrajaongkirapi'
+LOCKED_MySQL_host = 'localhost'
+LOCKED_MySQL_port = '3306'
+LOCKED_MySQL_user = 'root'
+LOCKED_MySQL_password = ''
+LOCKED_MySQL_database = 'opscoredb'
+```
