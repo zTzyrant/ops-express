@@ -1,5 +1,5 @@
 const mysql = require('mysql')
-console.log('Runnin On Dev Mode');
+console.log('Running On Dev Mode');
 
 const db = mysql.createConnection({
     host: "localhost", 

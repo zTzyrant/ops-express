@@ -1,6 +1,6 @@
 const mysql = require('mysql')
 const { env } = require('process')
-console.log('Runnin On Prod Mode');
+console.log('Running On Prod Mode');
 
 const db = mysql.createConnection({
     host: env.LOCKED_MySQL_host,
