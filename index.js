@@ -330,7 +330,7 @@ app.post('/calcpages', (req, res) => {
 
 // get all product
 app.get('/ops-prod', (req, res) => {
-    db.query(`SELECT * FROM product INNER JOIN merchant ON merchant.merchantid = product.merchantid`, (err, result) => {
+    db.query(`SELECT * FROM product INNER JOIN merchant ON merchant.merchantid = product.merchantid INNER JOIN address ON merchant.addressid = address.addressid`, (err, result) => {
         let tempProduct = []
         result.forEach(element => {
             db.query(`SELECT * FROM producttype WHERE producttype.productid = ${element.productid}`, (err, productType) => {
@@ -441,7 +441,7 @@ app.get('/ops-prod/category/:from', (req, res) => {
 })
 
 app.get('/ops-prod/:id?', (req, res) => {
-    db.query(`SELECT * FROM product INNER JOIN merchant ON merchant.merchantid = product.merchantid WHERE productid = '${req.params.id}'`, (err, result) => {
+    db.query(`SELECT * FROM product INNER JOIN merchant ON merchant.merchantid = product.merchantid INNER JOIN address ON merchant.addressid = address.addressid WHERE productid = '${req.params.id}'`, (err, result) => {
         let tempProduct = []
         result.forEach(element => {
             db.query(`SELECT * FROM producttype WHERE producttype.productid = ${element.productid}`, (err, productType) => {
