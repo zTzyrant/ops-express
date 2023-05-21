@@ -188,6 +188,7 @@ app.get('/forgetpassword', (req, res) => {
             console.log(result[0].username);
             console.log("Generate Token");
             console.log(req.query.email);
+            let datenow = moment().format('YYYY-MM-DD')
             let encrypted = CryptoJS.AES.encrypt(req.query.email, process.env.LOCKED_API_PASSWORD + datenow);
             let linkresetpassword = encrypted.toString()
             console.log("Token: " + linkresetpassword);
@@ -202,6 +203,7 @@ app.get('/forgetpassword', (req, res) => {
 app.get('/checkToken', (req, res) => {
     let tempSalt = req.query.salt
     let replaced = tempSalt.split(' ').join('+');
+    let datenow = moment().format('YYYY-MM-DD')
     let decrypted = CryptoJS.AES.decrypt(replaced, process.env.LOCKED_API_PASSWORD + datenow);
     console.log("New: " + decrypted.toString(CryptoJS.enc.Utf8) + " From: " + req.query.email);
     let checkToken = decrypted.toString(CryptoJS.enc.Utf8) === req.query.email
@@ -495,6 +497,7 @@ app.post('/registermerchant', (req, res) => {
         position, cardid, // table adminprinting
         merchantuname, merchantname, opentime, closetime, merchantlogo, subscription_type// table merchant
     } = req.body
+    let datenow = moment().format('YYYY-MM-DD')
 
     if(fulladdress && city && postcode && phoneaddress && 
         username && password && fullname && gender && email && phone && 
@@ -1374,6 +1377,8 @@ app.post('/secure/consumer/payment', (req, res) => {
     }
 
     const costs = req.body.transaction_details.gross_amount
+
+    let date_ob = new Date();
     let timeNow = `${date_ob.getHours()}:${date_ob.getMinutes()}:${date_ob.getSeconds()}`
     
     coreApi.charge(req.body).then((chargeResponse)=>{
@@ -1382,6 +1387,7 @@ app.post('/secure/consumer/payment', (req, res) => {
             response_midtrans: JSON.stringify(chargeResponse),
             order_arrays: req.body.item_details_ops
         }
+        let datenow = moment().format('YYYY-MM-DD')
         let query = `
         INSERT INTO transaction (
             transactionID, shippingOptions, addressid, shippingvia, paymentOptions, costs, payment_status,
@@ -1459,12 +1465,8 @@ app.get('/secure/consumer/payment/status/:transaction_id', (req, res) => {
                                 }
                             })
                         });
+                        let datenow = moment().format('YYYY-MM-DD')
                         let date_ob = new Date();
-
-                        let date = ("0" + date_ob.getDate()).slice(-2);
-                        let month = ("0" + (date_ob.getMonth() + 1)).slice(-2);
-                        let year = date_ob.getFullYear();
-                        let datenow = `${year}-${month}-${date}`
                         let timeNow = `${date_ob.getHours()}:${date_ob.getMinutes()}:${date_ob.getSeconds()}`
 
                         let query3 = `
@@ -1691,10 +1693,7 @@ app.get('/secure/merchant/sales/report/:merchant_id', (req, res) => {
 
 app.get('/secure/merchant/income/today/:merchant_id', (req, res) => {
     const merchant_id = req.params.merchant_id
-    let date = ("0" + date_ob.getDate()).slice(-2);
-    let month = ("0" + (date_ob.getMonth() + 1)).slice(-2);
-    let year = date_ob.getFullYear();
-    let datenow = `${year}-${month}-${date}`
+    let datenow = moment().format('YYYY-MM-DD')
 
     let get_total_order_costs = `SELECT SUM(orderdata.totalcost) AS total_order_costs FROM orderdata INNER JOIN transaction ON orderdata.transactionid = transaction.transactionID WHERE orderdata.merchantid = '${merchant_id}' AND orderdata.orderStatus = 'Done' AND transaction.transactionStatus = 'DONE' AND transaction.dateDoneTrans = '${datenow}'`
     let get_total_sold_product_wquantity = `SELECT SUM(orderdata.totalquantity) AS total_sales_product_today FROM orderdata INNER JOIN producttype ON orderdata.productype = producttype.papertype INNER JOIN transaction ON orderdata.transactionid = transaction.transactionID WHERE orderdata.merchantid = '${merchant_id}' AND orderdata.orderStatus = 'Done' AND transaction.dateDoneTrans = '${datenow}';`
