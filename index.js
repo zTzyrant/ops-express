@@ -263,6 +263,26 @@ app.post('/updateCustomer', (req, res) => {
     }
 })
 
+app.post('/updateUsers', (req, res) => {
+    const {email, password, fullname, gender} = req.body;
+    console.log(req.body);
+    console.log(email);
+    if(email !== "" && fullname !== "" && gender !== ""){
+        db.query(`UPDATE user set fullname = '${fullname}', gender = '${gender}' WHERE user.email = '${email}'`, (err, result) => {
+            if(err) throw err
+                console.log(result);
+                if(result.affectedRows > 0){
+                    console.log(`Success Update account information for email: ${email}`);
+                    res.send('1')
+                }else{
+                    res.send('-2')
+            }
+        })
+    } else{
+        res.send('0')
+    }
+})
+
 app.post('/getconsumerdatas', (req, res) => {
     console.log("iam here");
     const {email, password} = req.body;
@@ -492,7 +512,7 @@ app.get('/show-merchant', (req, res) => {
 // register merchant
 app.post('/registermerchant', (req, res) => {
     const {
-        fulladdress, city, postcode, phoneaddress, note, // table address
+        fulladdress, city, postcode, phoneaddress, note, longitude, latitude, // table address
         username, password, fullname, gender, email, phone, // table user
         position, cardid, // table adminprinting
         merchantuname, merchantname, opentime, closetime, merchantlogo, subscription_type// table merchant
@@ -504,8 +524,8 @@ app.post('/registermerchant', (req, res) => {
         position && cardid && 
         merchantuname && merchantname && opentime && closetime && merchantlogo && subscription_type
     ){
-        addressSQL = `INSERT INTO address (addressid, fulladdress, city, postcode, phoneAddress, note) VALUES 
-        (NULL, '${fulladdress}', '${city}', '${postcode}', '${phoneaddress}', '${note}')`
+        addressSQL = `INSERT INTO address (addressid, fulladdress, city, postcode, longitude, latitude, phoneAddress, note) VALUES 
+        (NULL, '${fulladdress}', '${city}', '${postcode}', '${longitude}', '${latitude}', '${phoneaddress}', '${note}')`
         db.query(addressSQL, (err1, fields1)=>{ // add address
             if(err1) throw err1
             merchantSQL = `INSERT INTO merchant (merchantid, merchantuname, merchantname, datecreated, opentime, closetime, merchantlogo, subscription_type, ownerid, addressid) 
@@ -681,9 +701,8 @@ app.put('/changes/developer/update/merchant', (req, res) => {
         edmerchopen, edmerchclose, edmerchantlogo, subscription_type,
         // Merchant Address
         addressid, edmerchaddress, edmerchcity, edmerchpostcode, 
-        edmerchtcp, edmerchtinfo
+        edmerchtcp, edmerchtinfo, longitude, latitude
     } = req.body
-
     sqlMerchant = `UPDATE merchant SET merchantuname = '${edmerchuname}',
         merchantname = '${edmerchname}', datecreated = '${edmerchdate}',
         opentime = '${edmerchopen}', closetime = '${edmerchclose}',
@@ -691,7 +710,7 @@ app.put('/changes/developer/update/merchant', (req, res) => {
         WHERE merchant.merchantid = ${merchantid}
     `
     sqlAddress = `UPDATE address SET fulladdress = '${edmerchaddress}', city = 
-        '${edmerchcity}', postcode = '${edmerchpostcode}', phoneAddress = '${edmerchtcp}', 
+        '${edmerchcity}', postcode = '${edmerchpostcode}', longitude = '${longitude}', latitude = '${latitude}', phoneAddress = '${edmerchtcp}', 
         note = '${edmerchtinfo}' WHERE address.addressid = ${addressid}
     `
 
@@ -1694,10 +1713,9 @@ app.get('/secure/merchant/sales/report/:merchant_id', (req, res) => {
 app.get('/secure/merchant/income/today/:merchant_id', (req, res) => {
     const merchant_id = req.params.merchant_id
     let datenow = moment().format('YYYY-MM-DD')
-
     let get_total_order_costs = `SELECT SUM(orderdata.totalcost) AS total_order_costs FROM orderdata INNER JOIN transaction ON orderdata.transactionid = transaction.transactionID WHERE orderdata.merchantid = '${merchant_id}' AND orderdata.orderStatus = 'Done' AND transaction.transactionStatus = 'DONE' AND transaction.dateDoneTrans = '${datenow}'`
     let get_total_sold_product_wquantity = `SELECT SUM(orderdata.totalquantity) AS total_sales_product_today FROM orderdata INNER JOIN producttype ON orderdata.productype = producttype.papertype INNER JOIN transaction ON orderdata.transactionid = transaction.transactionID WHERE orderdata.merchantid = '${merchant_id}' AND orderdata.orderStatus = 'Done' AND transaction.dateDoneTrans = '${datenow}';`
-    let get_orders_with_costs = `SELECT SUM(orderdata.totalquantity) AS total_quantity, SUM(orderdata.totalcost) AS total_costs, (orderdata.productype) AS product, (transaction.dateTransaction) FROM orderdata INNER JOIN producttype ON orderdata.productype = producttype.papertype INNER JOIN transaction ON transaction.transactionID = orderdata.transactionid WHERE orderdata.merchantid = '${merchant_id}' AND transaction.dateTransaction = '${datenow}' AND transaction.transactionStatus = 'DONE'`
+    let get_orders_with_costs = `SELECT SUM(orderdata.totalquantity) AS total_quantity, SUM(orderdata.totalcost) AS total_costs, (orderdata.productype) AS product, (transaction.dateTransaction) FROM orderdata INNER JOIN producttype ON orderdata.productype = producttype.papertype INNER JOIN transaction ON transaction.transactionID = orderdata.transactionid WHERE orderdata.merchantid = '${merchant_id}' AND transaction.dateDoneTrans = '${datenow}' AND transaction.transactionStatus = 'DONE'`
     let query = `
         SELECT orderdata.*, transaction.*, consumer.*, user.username, user.fullname, 
         user.gender, user.email, user.phone, address.*, merchant.merchantname FROM orderdata 
@@ -1709,7 +1727,7 @@ app.get('/secure/merchant/income/today/:merchant_id', (req, res) => {
         WHERE
         transaction.payment_status = 'settlement' AND 
         orderdata.merchantid = '${merchant_id}' AND 
-        transaction.dateTransaction = '${datenow}'
+        transaction.dateDoneTrans = '${datenow}'
     `
 
     try {
@@ -1784,6 +1802,17 @@ app.get('/user/customer/view/order/history/:user_id', (req, res) => {
             })
         });
         
+    })
+})
+
+app.get('/merchant/view/longlat/', (req, res) => {
+    let query = `SELECT (address.longitude) AS longitude, (address.latitude) AS latitude, (merchant.merchantname) AS name FROM address INNER JOIN merchant ON address.addressid = merchant.addressid`
+    db.query(query, (err, fields) => {
+        if(fields.length > 0){
+            res.send({statusQuo: '1', result: fields})
+        } else {
+            res.send({statusQuo: '-1'})
+        }
     })
 })
 
