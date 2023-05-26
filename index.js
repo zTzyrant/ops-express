@@ -65,11 +65,11 @@ app.get('/', (req, res) => {
 
 app.get('/data', (req, res) => {
     if(req.query.userid != null){
-        db.query(`SELECT * FROM USER WHERE userid = ${req.query.userid}`, (err, result) => {
+        db.query(`SELECT * FROM user WHERE userid = ${req.query.userid}`, (err, result) => {
             response(200, result, "get all data user", res)
         })
     } else {
-        db.query(`SELECT * FROM USER`, (err, result) => {
+        db.query(`SELECT * FROM user`, (err, result) => {
             // DATA FROM MYSQL STORE IN HERE
             response(200, result, "get all data user", res)
         })
@@ -78,7 +78,7 @@ app.get('/data', (req, res) => {
 
 app.get('/datausrname', (req, res) => {
 
-  db.query(`SELECT username, email, phone FROM USER`, (err, result) => {
+  db.query(`SELECT username, email, phone FROM user`, (err, result) => {
     // DATA FROM MYSQL STORE IN HERE
     response(200, result, "get all data user", res)
   })
